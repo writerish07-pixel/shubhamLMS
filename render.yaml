@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: shubham-motors
+    runtime: node
+    plan: starter
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: DATA_DIR
+        value: /var/data
+      - key: BOTSPACE_CHANNEL_ID
+        value: 69ba3b443c58de2b169911a3
+      - key: BOTSPACE_CHANNEL_PHONE
+        value: "+917240516000"
+      - key: BOTSPACE_API_KEY
+        sync: false
+    disk:
+      name: leads-data
+      mountPath: /var/data
+      sizeGB: 1

@@ -1,0 +1,9 @@
+node_modules
+.next
+data/store.json
+data/*.tmp
+.git
+.env*.local
+agent-tools
+assets
+*.md
