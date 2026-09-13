@@ -54,7 +54,7 @@ Create these **3** Meta-approved **Hindi (hi) UTILITY** templates in BotSpace. O
 
 | Template ID | When | Quick reply | Variables |
 |---|---|---|---|
-| `shubham_lead_followup_hi` | First follow-up on a new lead | **बुकिंग** | `{{1}}` name, `{{2}}` model |
+| `shubham_lead_followup` | First follow-up on a new lead | **बुकिंग** | `{{1}}` name, `{{2}}` model |
 | `shubham_booking_hi` | After the customer taps बुकिंग | **खरीद** (bought, after delivery) | `{{1}}` name, `{{2}}` model |
 | `shubham_bought_hi` | After delivery / खरीद | none — stops auto follow-up | `{{1}}` name, `{{2}}` model |
 

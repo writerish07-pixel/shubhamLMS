@@ -16,7 +16,7 @@ export type HindiTemplate = {
   variableCount: number;
 };
 
-export const LEAD_FOLLOWUP_TEMPLATE_ID = "shubham_lead_followup_hi";
+export const LEAD_FOLLOWUP_TEMPLATE_ID = "shubham_lead_followup";
 export const BOOKING_TEMPLATE_ID = "shubham_booking_hi";
 export const BOUGHT_TEMPLATE_ID = "shubham_bought_hi";
 
