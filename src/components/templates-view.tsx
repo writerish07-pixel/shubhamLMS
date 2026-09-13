@@ -76,10 +76,9 @@ export function TemplatesView() {
         <div>
           <h1 className="font-heading text-3xl tracking-wide">हिंदी टेम्पलेट</h1>
           <p className="mt-1 max-w-2xl text-muted-foreground">
-            लीड फॉलो-अप <strong>UTILITY</strong> टेम्पलेट से भेजें — Marketing
-            टेम्पलेट Meta अक्सर डिलीवर नहीं करता (error 131049)। नीचे हिंदी
-            UTILITY फॉलो-अप BotSpace में बनाएँ (भाषा <strong>Hindi / hi</strong>
-            , बटन <strong>बुकिंग</strong>), फिर <strong>फॉलो-अप से सिंक करें</strong>।
+            लीड फॉलो-अप में सिर्फ <strong>3 हिंदी UTILITY</strong> टेम्पलेट हैं।
+            BotSpace में भाषा <strong>Hindi / hi</strong> चुनें, फिर{" "}
+            <strong>फॉलो-अप से सिंक करें</strong>।
           </p>
         </div>
         <Button onClick={apply} disabled={syncing}>
@@ -98,11 +97,15 @@ export function TemplatesView() {
               : data.remote.error}
           </p>
           <div className="rounded-lg border border-[#c8102e]/30 bg-[#c8102e]/5 px-3 py-2 text-foreground">
-            व्हाट्सऐप फेल होने की वजह: पूछताछ मार्केटिंग टेम्पलेट + गलत वेरिएबल
-            संख्या (4 भेजे, टेम्पलेट में 2) + 24 घंटे के बाहर सेशन मैसेज। अब डेस्क{" "}
-            <code>shubham_lead_followup_hi</code> UTILITY भेजता है, केवल{" "}
-            {"{{1}}"} नाम और {"{{2}}"} मॉडल, और सेशन मैसेज तभी जब ग्राहक ने 24 घंटे
-            में जवाब दिया हो।
+            1) पहला फॉलो-अप — <code>shubham_lead_followup_hi</code> · बटन{" "}
+            <strong>बुकिंग</strong>
+            <br />
+            2) बुकिंग हो जाए — <code>shubham_booking_hi</code> · डिलीवरी पर बटन{" "}
+            <strong>खरीद</strong>
+            <br />
+            3) खरीद / डिलीवरी — <code>shubham_bought_hi</code> · ऑटो फॉलो-अप बंद
+            <br />
+            वेरिएबल: {"{{1}}"} नाम, {"{{2}}"} मॉडल।
           </div>
           <p>
             अभी मैप: पूछताछ <code>{data.mapped.inquiry}</code> · बुकिंग{" "}
@@ -153,7 +156,7 @@ export function TemplatesView() {
 
       <Card>
         <CardHeader>
-          <CardTitle>BotSpace में ये टेम्पलेट बनाएँ</CardTitle>
+          <CardTitle>BotSpace में ये 3 टेम्पलेट बनाएँ</CardTitle>
         </CardHeader>
         <CardContent className="overflow-x-auto text-sm">
           <table className="w-full min-w-[640px] text-left">
@@ -184,11 +187,11 @@ export function TemplatesView() {
                   <td className="py-2 pr-3">hi</td>
                   <td className="py-2 pr-3">
                     {row.category}
-                    {row.templateId === "shubham_lead_followup_hi"
-                      ? " · लीड फॉलो-अप (पहले यह बनाएँ)"
-                      : row.category === "MARKETING"
-                        ? " · ऑटो सीक्वेंस में नहीं"
-                        : ""}
+                    {row.role === "inquiry"
+                      ? " · पहला फॉलो-अप"
+                      : row.role === "booking"
+                        ? " · बुकिंग"
+                        : " · खरीद"}
                   </td>
                   <td className="py-2">{row.buttonLabel ?? "—"}</td>
                 </tr>
@@ -208,18 +211,13 @@ export function TemplatesView() {
                   Template ID: <code>{row.templateId}</code> · भाषा hi ·{" "}
                   {row.category} ·{" "}
                   {row.role === "inquiry"
-                    ? "पूछताछ"
-                    : row.role === "followup"
-                      ? "लीड फॉलो-अप"
-                      : row.role === "booking"
-                        ? "बुकिंग"
-                        : "खरीद"}
+                    ? "पहला फॉलो-अप"
+                    : row.role === "booking"
+                      ? "बुकिंग"
+                      : "खरीद"}
                 </p>
               </div>
               <div className="flex gap-2">
-                {row.templateId === "shubham_lead_followup_hi" ? (
-                  <Badge>पहले यह बनाएँ</Badge>
-                ) : null}
                 {row.buttonLabel ? (
                   <Badge>{row.buttonLabel}</Badge>
                 ) : (

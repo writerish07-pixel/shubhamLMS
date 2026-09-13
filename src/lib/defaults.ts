@@ -1,12 +1,14 @@
 import {
+  BOUGHT_TEMPLATE_ID,
+  BOOKING_TEMPLATE_ID,
+  defaultBookingSequence,
   defaultInquirySequence,
-  HINDI_TEMPLATES,
   LEAD_FOLLOWUP_TEMPLATE_ID,
-  toHindiStep,
+  templateByRole,
 } from "@/lib/hindi-templates";
 import type { SequenceStep, Settings } from "@/lib/types";
 
-export const STORE_VERSION = 3;
+export const STORE_VERSION = 4;
 
 export const DEFAULT_SETTINGS: Settings = {
   apiKey:
@@ -21,8 +23,8 @@ export const DEFAULT_SETTINGS: Settings = {
   liveWhatsApp: true,
   createBotspaceContacts: true,
   inquiryTemplateId: LEAD_FOLLOWUP_TEMPLATE_ID,
-  bookingTemplateId: "shubham_booking_confirm_hi",
-  purchaseTemplateId: "shubham_purchase_thanks_hi",
+  bookingTemplateId: BOOKING_TEMPLATE_ID,
+  purchaseTemplateId: BOUGHT_TEMPLATE_ID,
   templateLanguage: "hi",
   followupWindowStart: "09:30",
   followupWindowEnd: "20:00",
@@ -30,9 +32,6 @@ export const DEFAULT_SETTINGS: Settings = {
 
 export const DEFAULT_INQUIRY_SEQUENCE: SequenceStep[] = defaultInquirySequence();
 
-export const DEFAULT_BOOKING_SEQUENCE: SequenceStep[] = HINDI_TEMPLATES.filter(
-  (row) => row.role === "booking",
-).map(toHindiStep);
+export const DEFAULT_BOOKING_SEQUENCE: SequenceStep[] = defaultBookingSequence();
 
-export const PURCHASE_THANKS_BODY =
-  HINDI_TEMPLATES.find((row) => row.role === "purchase")?.sessionBody ?? "";
+export const PURCHASE_THANKS_BODY = templateByRole("purchase")?.sessionBody ?? "";

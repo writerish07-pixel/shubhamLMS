@@ -284,7 +284,7 @@ export async function sendLeadWhatsApp(
 
   return failResult(
     lastError ||
-      "WhatsApp template send failed and the 24-hour session window is closed. Create UTILITY template shubham_lead_followup_hi in BotSpace (Hindi, बुकिंग button).",
+      "WhatsApp template send failed and the 24-hour session window is closed. Create the 3 Hindi UTILITY templates in BotSpace: shubham_lead_followup_hi, shubham_booking_hi, shubham_bought_hi.",
   );
 }
 
