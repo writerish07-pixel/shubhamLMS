@@ -4,7 +4,9 @@ import {
   DEFAULT_BOOKING_SEQUENCE,
   DEFAULT_INQUIRY_SEQUENCE,
   DEFAULT_SETTINGS,
+  STORE_VERSION,
 } from "@/lib/defaults";
+import { applyHindiTemplateCatalog } from "@/lib/hindi-templates";
 import type { Lead, MessageLog, SequenceStep, Settings, StoreData } from "@/lib/types";
 
 function dataDir() {
@@ -23,6 +25,7 @@ function storePath() {
 
 function emptyStore(): StoreData {
   return {
+    storeVersion: STORE_VERSION,
     settings: { ...DEFAULT_SETTINGS },
     inquirySequence: structuredClone(DEFAULT_INQUIRY_SEQUENCE),
     bookingSequence: structuredClone(DEFAULT_BOOKING_SEQUENCE),
@@ -39,17 +42,30 @@ async function loadFromDisk(): Promise<StoreData> {
     const raw = await readFile(storePath(), "utf8");
     const parsed = JSON.parse(raw) as Partial<StoreData>;
     const base = emptyStore();
-    return {
-      settings: { ...base.settings, ...parsed.settings },
+    const version = parsed.storeVersion ?? 1;
+    const data: StoreData = {
+      storeVersion: STORE_VERSION,
+      settings: {
+        ...base.settings,
+        ...parsed.settings,
+      },
       inquirySequence: parsed.inquirySequence?.length
         ? parsed.inquirySequence
         : base.inquirySequence,
       bookingSequence: parsed.bookingSequence?.length
         ? parsed.bookingSequence
         : base.bookingSequence,
-      leads: parsed.leads ?? [],
+      leads: (parsed.leads ?? []).map((lead) => ({
+        ...lead,
+        unreadCount: lead.unreadCount ?? 0,
+        lastReadAt: lead.lastReadAt ?? null,
+      })),
       messages: parsed.messages ?? [],
     };
+    if (version < STORE_VERSION) {
+      applyHindiTemplateCatalog(data);
+    }
+    return data;
   } catch {
     return emptyStore();
   }

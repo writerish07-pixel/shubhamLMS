@@ -66,9 +66,12 @@ export function SettingsView() {
         <div>
           <h1 className="font-heading text-3xl tracking-wide">BotSpace</h1>
           <p className="mt-1 max-w-2xl text-muted-foreground">
-            Connected to Shubham Motors channel {settings.channelId}. Create the
-            three WhatsApp templates in BotSpace with Booked and Purchase quick
-            replies, then keep these template IDs in sync.
+            Connected to Shubham Motors channel {settings.channelId}. हिंदी
+            टेम्पलेट{" "}
+            <a className="underline" href="/templates">
+              टेम्पलेट
+            </a>{" "}
+            पेज पर हैं। BotSpace में भाषा Hindi चुनें, बटन बुकिंग / खरीद रखें।
           </p>
         </div>
         <Button onClick={save} disabled={saving}>
@@ -121,34 +124,37 @@ export function SettingsView() {
         </CardHeader>
         <CardContent className="grid gap-3 sm:grid-cols-3">
           <Field
-            label="Inquiry / Booked"
+            label="पूछताछ / बुकिंग"
             value={settings.inquiryTemplateId}
             onChange={(inquiryTemplateId) =>
               setSettings({ ...settings, inquiryTemplateId })
             }
           />
           <Field
-            label="Booking / Purchase"
+            label="बुकिंग / खरीद"
             value={settings.bookingTemplateId}
             onChange={(bookingTemplateId) =>
               setSettings({ ...settings, bookingTemplateId })
             }
           />
           <Field
-            label="Purchase thank-you"
+            label="खरीद धन्यवाद"
             value={settings.purchaseTemplateId}
             onChange={(purchaseTemplateId) =>
               setSettings({ ...settings, purchaseTemplateId })
             }
           />
           <p className="text-sm text-muted-foreground sm:col-span-3">
-            Meta only delivers buttons on approved templates. Suggested names:
-            <code className="mx-1">hero_inquiry_followup</code> with a Booked
-            quick reply, <code className="mx-1">hero_booking_confirm</code> with
-            a Purchase quick reply, and{" "}
-            <code className="mx-1">hero_purchase_thanks</code>. Body variables
-            should be customer name then model. Until those are approved, the
-            app still sends session text and accepts BOOKED / PURCHASE replies.
+            Meta only delivers buttons on approved Hindi templates. IDs are on
+            the{" "}
+            <a className="underline" href="/templates">
+              टेम्पलेट
+            </a>{" "}
+            page: inquiry <code>{settings.inquiryTemplateId}</code> (बुकिंग),
+            booking <code>{settings.bookingTemplateId}</code> (खरीद), purchase{" "}
+            <code>{settings.purchaseTemplateId}</code>. Variables: name then
+            model. Until Meta approves them, session text still works and
+            बुकिंग / खरीद / BOOKED / PURCHASE replies are accepted.
           </p>
         </CardContent>
       </Card>
@@ -159,8 +165,12 @@ export function SettingsView() {
         </CardHeader>
         <CardContent className="space-y-2 text-sm text-muted-foreground">
           <p>
-            Point BotSpace incoming-message webhook to this app so a customer
-            tapping Booked or Purchase updates the lead automatically:
+            Point BotSpace incoming-message webhook here so customer chats and
+            बुकिंग / खरीद taps land in this desk inbox. Staff replies from{" "}
+            <a className="underline" href="/inbox">
+              इनबॉक्स
+            </a>
+            , not from BotSpace.
           </p>
           <code className="block rounded-lg bg-muted px-3 py-2 text-foreground">
             /api/webhooks/botspace

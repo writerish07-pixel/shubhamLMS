@@ -1,10 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import {
   Activity,
   Bike,
+  Download,
+  FileText,
+  Inbox,
   LayoutDashboard,
   MessageSquare,
   Settings2,
@@ -15,15 +19,37 @@ import { cn } from "@/lib/utils";
 
 const NAV = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/inbox", label: "इनबॉक्स", icon: Inbox },
   { href: "/leads", label: "Leads", icon: Users },
   { href: "/import", label: "Import", icon: Upload },
   { href: "/sequence", label: "Follow-up", icon: MessageSquare },
+  { href: "/templates", label: "टेम्पलेट", icon: FileText },
   { href: "/activity", label: "Activity", icon: Activity },
   { href: "/settings", label: "Settings", icon: Settings2 },
+  { href: "/install", label: "ऐप", icon: Download },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const inbox = pathname.startsWith("/inbox");
+  const [unread, setUnread] = useState(0);
+
+  useEffect(() => {
+    const load = () => {
+      fetch("/api/inbox")
+        .then((response) => response.json())
+        .then((data: { unread?: number }) => setUnread(data.unread ?? 0))
+        .catch(() => undefined);
+    };
+    load();
+    const onUpdate = () => load();
+    window.addEventListener("leads-updated", onUpdate);
+    const timer = window.setInterval(load, 10000);
+    return () => {
+      window.removeEventListener("leads-updated", onUpdate);
+      window.clearInterval(timer);
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -71,13 +97,23 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 >
                   <Icon className="size-3.5" />
                   {item.label}
+                  {item.href === "/inbox" && unread > 0 ? (
+                    <span className="rounded-full bg-white px-1.5 text-[10px] font-semibold text-[#c8102e]">
+                      {unread}
+                    </span>
+                  ) : null}
                 </Link>
               );
             })}
           </div>
         </nav>
       </header>
-      <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
+      <main
+        className={cn(
+          "mx-auto w-full max-w-7xl",
+          inbox ? "px-0 py-0 sm:px-4 sm:py-4" : "px-4 py-6 sm:px-6 sm:py-8",
+        )}
+      >
         {children}
       </main>
     </div>

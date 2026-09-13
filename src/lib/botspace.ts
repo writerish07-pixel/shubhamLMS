@@ -187,3 +187,89 @@ export async function sendLeadWhatsApp(
     raw: session.raw,
   };
 }
+
+export type HarvestedTemplate = {
+  templateId: string;
+  language?: string;
+  body?: string;
+  buttons?: string[];
+  sourceMessageId?: string;
+};
+
+const BOTSPACE_PUBLIC_PATHS = [
+  "POST /v1/{channelId}/message/send-message",
+  "POST /v1/{channelId}/message/send-session-message",
+  "POST /v1/{channelId}/message/send-session-media-message",
+  "GET /v1/{channelId}/message/{messageId}",
+  "GET /v1/{channelId}/message/{messageId}/delivery-status",
+  "GET|POST /v1/{channelId}/conversation",
+  "GET /v1/{channelId}/conversation/{conversationId}",
+  "POST /v1/contact",
+];
+
+function extractTemplates(raw: unknown, sourceMessageId?: string): HarvestedTemplate[] {
+  const found: HarvestedTemplate[] = [];
+  const visit = (value: unknown, depth = 0) => {
+    if (depth > 8 || value == null) return;
+    if (Array.isArray(value)) {
+      value.forEach((item) => visit(item, depth + 1));
+      return;
+    }
+    if (typeof value !== "object") return;
+    const obj = value as Record<string, unknown>;
+    if (typeof obj.templateId === "string") {
+      const desc = obj.templateDesc as
+        | { body?: string; buttons?: { label?: string }[] }
+        | undefined;
+      found.push({
+        templateId: obj.templateId,
+        language:
+          typeof obj.templateLanguage === "string" ? obj.templateLanguage : undefined,
+        body: typeof desc?.body === "string" ? desc.body : undefined,
+        buttons: Array.isArray(desc?.buttons)
+          ? desc.buttons
+              .map((button) => button?.label)
+              .filter((label): label is string => Boolean(label))
+          : undefined,
+        sourceMessageId,
+      });
+    }
+    for (const nested of Object.values(obj)) visit(nested, depth + 1);
+  };
+  visit(raw);
+  return found;
+}
+
+export async function inspectBotspaceTemplates(
+  settings: Settings,
+  messageIds: string[] = [],
+) {
+  const uniqueIds = [...new Set(messageIds.filter(Boolean))].slice(0, 12);
+  const harvested: HarvestedTemplate[] = [];
+  const seen = new Set<string>();
+
+  for (const messageId of uniqueIds) {
+    const result = await botspace<unknown>(
+      settings,
+      `/v1/${settings.channelId}/message/${messageId}`,
+    );
+    if (!result.ok) continue;
+    for (const row of extractTemplates(result.raw, messageId)) {
+      const key = `${row.templateId}:${row.language ?? ""}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      harvested.push(row);
+    }
+  }
+
+  return {
+    listed: false as const,
+    hasListEndpoint: false as const,
+    docsUrl: "https://public-api.bot.space",
+    publicPaths: BOTSPACE_PUBLIC_PATHS,
+    error:
+      "BotSpace Public API v1 can send templates but cannot list the template library. Hindi copy below is what this desk uses. Create the same Template IDs in BotSpace (language hi), then press sync.",
+    harvested,
+    harvestedFromMessages: uniqueIds.length,
+  };
+}

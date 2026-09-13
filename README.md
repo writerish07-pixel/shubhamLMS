@@ -1,16 +1,20 @@
 # Shubham Motors WhatsApp follow-up
 
-Sales desk for **Shubham Motors**, Hero Motocorp dealer in Jaipur. Import enquiry leads, send automatic WhatsApp from the BotSpace channel `+91 72405 16000`, confirm bookings with a **Booked** button, then stop follow-up when **Purchase** is clicked.
+Sales desk for **Shubham Motors**, Hero Motocorp dealer in Jaipur. Import enquiry leads, send automatic **Hindi** WhatsApp from the BotSpace channel `+91 72405 16000`, confirm bookings with a **बुकिंग** button, then stop follow-up when **खरीद** is clicked.
 
 ## What it does
 
 1. Bulk-import leads (name, mobile, Hero model) from a CSV template.
 2. Start an auto WhatsApp follow-up sequence for every new enquiry.
-3. Each enquiry message asks the customer to tap **Booked**.
-4. **Booked** sends a booking WhatsApp that includes a **Purchase** button.
-5. **Purchase** marks the lead sold and takes them **out of auto follow-up**.
+3. Staff reply to every customer from the **इनबॉक्स** in this app — no BotSpace chat window needed.
+4. Each enquiry WhatsApp is in Hindi and asks the customer to tap **बुकिंग**.
+5. **खरीद** marks the lead sold and takes them **out of auto follow-up**.
 
-Staff can press the same Booked / Purchase buttons on the lead row. Customer taps and `BOOKED` / `PURCHASE` replies are picked up on `/api/webhooks/botspace`.
+Install on an Android phone: open the live URL in **Chrome** → menu → **Add to Home screen** / **Install app**, or use the in-app **ऐप** page.
+
+Staff can also press बुकिंग / खरीद on the lead row. Customer taps and `BOOKED` / `PURCHASE` / बुकिंग / खरीद replies land on `/api/webhooks/botspace` and show in Inbox.
+
+Set follow-up **interval** (30 min / 4 hours / 1 day) and **send time** (IST, e.g. 11:00) on the Follow-up page. Each lead also has a next-WhatsApp time picker. Auto messages stay inside showroom hours (default 09:30–20:00 IST).
 
 ## Run locally
 
@@ -20,7 +24,11 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Open [http://localhost:43147](http://localhost:43147).
+Open [http://localhost:43147](http://localhost:43147). On a phone, open the same URL in Chrome and install from **ऐप**.
+
+## Inbox (replies from this app)
+
+Point the BotSpace incoming-message webhook at this app. Incoming WhatsApp appears under **इनबॉक्स**. Type a reply and it is sent as a WhatsApp session message from `+91 7240516000`. Unknown numbers are created as paused leads so staff can still answer.
 
 ## Bulk upload template
 
@@ -42,15 +50,22 @@ This app is wired to:
 - Channel ID: `69ba3b443c58de2b169911a3`
 - WhatsApp: `+91 7240516000`
 
-Create these Meta-approved templates in BotSpace (quick-reply buttons required for the in-chat buttons):
+Create these Meta-approved **Hindi (hi)** templates in BotSpace (quick-reply buttons required for the in-chat buttons). Open **टेम्पलेट** in the desk and press **फॉलो-अप से सिंक करें**. BotSpace Public API cannot list the template library, so this desk ships the Hindi catalog and maps the IDs below.
 
-| Template ID | Button | Variables |
-|---|---|---|
-| `hero_inquiry_followup` | Booked | `{{1}}` name, `{{2}}` model |
-| `hero_booking_confirm` | Purchase | `{{1}}` name, `{{2}}` model |
-| `hero_purchase_thanks` | none | `{{1}}` name, `{{2}}` model |
+| Template ID | Role | Quick reply | Variables |
+|---|---|---|---|
+| `shubham_enquiry_welcome_hi` | Enquiry welcome | बुकिंग | `{{1}}` name, `{{2}}` model |
+| `shubham_enquiry_nudge_hi` | Same-day reminder | बुकिंग | `{{1}}` name, `{{2}}` model |
+| `shubham_enquiry_testride_hi` | Test ride | बुकिंग | `{{1}}` name, `{{2}}` model |
+| `shubham_enquiry_offer_hi` | Exchange offer | बुकिंग | `{{1}}` name, `{{2}}` model |
+| `shubham_enquiry_emi_hi` | EMI / finance | बुकिंग | `{{1}}` name, `{{2}}` model |
+| `shubham_enquiry_last_hi` | Last enquiry reminder | बुकिंग | `{{1}}` name, `{{2}}` model |
+| `shubham_booking_confirm_hi` | Booking confirmed | खरीद | `{{1}}` name, `{{2}}` model |
+| `shubham_booking_payment_hi` | Payment reminder | खरीद | `{{1}}` name, `{{2}}` model |
+| `shubham_booking_last_hi` | Last booking reminder | खरीद | `{{1}}` name, `{{2}}` model |
+| `shubham_purchase_thanks_hi` | Purchase thank you | none | `{{1}}` name, `{{2}}` model |
 
-Until templates are approved, the app still sends session text (works inside the 24-hour window) and treats `BOOKED` / `PURCHASE` replies as button taps.
+Until templates are approved, the app still sends Hindi session text (works inside the 24-hour window) and treats `BOOKED` / `PURCHASE` / बुकिंग / खरीद replies as button taps.
 
 Point the BotSpace incoming-message webhook at:
 

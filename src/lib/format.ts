@@ -12,7 +12,7 @@ export function formatWhen(value: string | null): string {
 }
 
 export function formatDelay(minutes: number): string {
-  if (minutes <= 0) return "Immediately";
+  if (minutes <= 0) return "पिछले के तुरंत बाद";
   if (minutes < 60) return `${minutes} min later`;
   if (minutes % 1440 === 0) {
     const days = minutes / 1440;

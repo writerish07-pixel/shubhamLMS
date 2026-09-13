@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     name: body.name || "Test lead",
     phone,
     model: body.model || "Splendor Plus",
-    text: `Test WhatsApp from ${settings.businessName}, ${settings.city}. If you received this, BotSpace is connected.`,
+    text: `नमस्ते, शुभम मोटर्स जयपुर से टेस्ट व्हाट्सऐप है। अगर यह मैसेज आ गया तो BotSpace जुड़ गया है।`,
     templateId: settings.inquiryTemplateId,
     preferTemplate: Boolean(settings.inquiryTemplateId),
   });

@@ -41,6 +41,8 @@ export async function createLeads(
         nextStepIndex: 0,
         lastOutboundAt: null,
         lastInboundAt: null,
+        unreadCount: 0,
+        lastReadAt: null,
         conversationId: null,
         contactId: null,
         bookedAt: null,
