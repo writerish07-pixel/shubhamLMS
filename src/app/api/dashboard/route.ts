@@ -23,6 +23,7 @@ export async function GET() {
         new Date(lead.nextFollowupAt).getTime() <= now,
     ).length,
     liveWhatsApp: store.settings.liveWhatsApp,
+    unread: leads.reduce((sum, lead) => sum + (lead.unreadCount ?? 0), 0),
   };
 
   const dueSoon = [...leads]

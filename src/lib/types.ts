@@ -14,6 +14,7 @@ export type SequenceStep = {
   id: string;
   name: string;
   delayMinutes: number;
+  sendAtTime?: string | null;
   templateId: string;
   body: string;
   button: ButtonKind;
@@ -32,6 +33,8 @@ export type Lead = {
   nextStepIndex: number;
   lastOutboundAt: string | null;
   lastInboundAt: string | null;
+  unreadCount: number;
+  lastReadAt: string | null;
   conversationId: string | null;
   contactId: string | null;
   bookedAt: string | null;
@@ -69,9 +72,13 @@ export type Settings = {
   inquiryTemplateId: string;
   bookingTemplateId: string;
   purchaseTemplateId: string;
+  templateLanguage: "hi" | "en";
+  followupWindowStart: string;
+  followupWindowEnd: string;
 };
 
 export type StoreData = {
+  storeVersion?: number;
   settings: Settings;
   inquirySequence: SequenceStep[];
   bookingSequence: SequenceStep[];

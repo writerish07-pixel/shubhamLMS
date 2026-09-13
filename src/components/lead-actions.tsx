@@ -53,11 +53,11 @@ export function LeadActions({
           run(
             "booked",
             `/api/leads/${lead.id}/booked`,
-            "Booked WhatsApp sent with Purchase button",
+            "बुकिंग WhatsApp भेजा गया, खरीद बटन के साथ",
           )
         }
       >
-        {busy === "booked" ? "Sending…" : "Booked"}
+        {busy === "booked" ? "भेज रहे हैं…" : "बुकिंग"}
       </Button>
       <Button
         size={compact ? "sm" : "default"}
@@ -67,11 +67,11 @@ export function LeadActions({
           run(
             "purchase",
             `/api/leads/${lead.id}/purchase`,
-            "Purchase recorded. Lead is out of auto follow-up.",
+            "खरीद दर्ज। लीड ऑटो फॉलो-अप से निकल गया।",
           )
         }
       >
-        {busy === "purchase" ? "Sending…" : "Purchase"}
+        {busy === "purchase" ? "भेज रहे हैं…" : "खरीद"}
       </Button>
       {!compact && lead.autoFollowup && !purchased ? (
         <Button

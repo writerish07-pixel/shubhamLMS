@@ -21,6 +21,7 @@ type DashboardData = {
     failed: number;
     dueNow: number;
     liveWhatsApp: boolean;
+    unread: number;
   };
   dueSoon: Lead[];
   recentLeads: Lead[];
@@ -116,15 +117,25 @@ export function DashboardView() {
             Hero lead follow-up
           </h1>
           <p className="mt-2 max-w-2xl text-muted-foreground">
-            Import enquiry leads, send automatic WhatsApp from Shubham Motors,
-            tap Booked to send the booking message with Purchase, then stop
-            follow-up the moment Purchase is clicked.
+            Import enquiry leads, reply to WhatsApp from this desk (no BotSpace
+            inbox needed), and install the app on Android from{" "}
+            <Link className="underline" href="/install">
+              ऐप
+            </Link>
+            .
           </p>
         </div>
-        <Button render={<Link href="/import" />}>
-          <Upload className="size-4" />
-          Import leads
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" render={<Link href="/inbox" />}>
+            <MessageCircle className="size-4" />
+            इनबॉक्स
+            {data.stats.unread ? ` (${data.stats.unread})` : ""}
+          </Button>
+          <Button render={<Link href="/import" />}>
+            <Upload className="size-4" />
+            Import leads
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">

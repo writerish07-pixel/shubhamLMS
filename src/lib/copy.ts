@@ -43,7 +43,7 @@ export function interpolate(
 
 export function buttonHint(step: SequenceStep): string {
   if (step.button === "booked") {
-    return "\n\nReply BOOKED or tap the Booked button to confirm your booking.";
+    return "\n\nबुकिंग कन्फर्म करने के लिए *बुकिंग* बटन दबाएँ, या BOOKED लिखकर जवाब दें।";
   }
-  return "\n\nReply PURCHASE or tap the Purchase button after payment is complete.";
+  return "\n\nपेमेंट पूरा होने पर *खरीद* बटन दबाएँ, या PURCHASE लिखकर जवाब दें।";
 }

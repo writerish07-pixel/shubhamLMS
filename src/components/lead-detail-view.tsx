@@ -5,6 +5,8 @@ import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LeadActions } from "@/components/lead-actions";
+import { LeadScheduleCard } from "@/components/lead-schedule-card";
+import { ReplyComposer } from "@/components/reply-composer";
 import { StatusBadge } from "@/components/status-badge";
 import { formatWhen } from "@/lib/format";
 import { displayPhone } from "@/lib/phones";
@@ -76,11 +78,15 @@ export function LeadDetailView({ id }: { id: string }) {
         <LeadActions lead={lead} />
       </div>
 
+      <ReplyComposer leadId={lead.id} compact />
+
       <div className="grid gap-4 md:grid-cols-3">
         <Meta label="Next WhatsApp" value={formatWhen(lead.nextFollowupAt)} />
         <Meta label="Booked at" value={formatWhen(lead.bookedAt)} />
         <Meta label="Purchased at" value={formatWhen(lead.purchasedAt)} />
       </div>
+
+      <LeadScheduleCard lead={lead} />
 
       {lead.lastError ? (
         <Card>
@@ -100,7 +106,7 @@ export function LeadDetailView({ id }: { id: string }) {
             <p className="text-muted-foreground">No messages on this lead yet.</p>
           ) : (
             <ol className="space-y-4">
-              {messages.map((message) => (
+              {[...messages].reverse().map((message) => (
                 <li key={message.id} className="border-b border-border/70 pb-4 last:border-0">
                   <p className="text-xs text-muted-foreground">
                     {message.direction === "out" ? "Sent" : "Received"} · {message.status} ·{" "}

@@ -1,17 +1,35 @@
 import { buttonHint, interpolate } from "@/lib/copy";
 import { PURCHASE_THANKS_BODY } from "@/lib/defaults";
 import { sendLeadWhatsApp } from "@/lib/botspace";
+import { computeFollowupAt } from "@/lib/schedule";
 import {
   activeSequence,
   appendMessage,
-  findLeadByPhone,
   touchLead,
   withStore,
 } from "@/lib/store";
-import type { Lead, SequenceStep, StoreData } from "@/lib/types";
+import type { Lead, SequenceStep, Settings, StoreData } from "@/lib/types";
 
 function nextEnabledStep(steps: SequenceStep[], fromIndex: number) {
   return steps.findIndex((step, index) => index >= fromIndex && step.enabled);
+}
+
+function scheduleStep(
+  lead: Lead,
+  settings: Settings,
+  step: SequenceStep,
+  from: Date,
+  options: { respectWindow?: boolean } = {},
+) {
+  const immediate = step.delayMinutes <= 0 && !step.sendAtTime;
+  lead.nextFollowupAt = computeFollowupAt({
+    from,
+    delayMinutes: step.delayMinutes,
+    sendAtTime: step.sendAtTime,
+    windowStart: settings.followupWindowStart || "09:30",
+    windowEnd: settings.followupWindowEnd || "20:00",
+    respectWindow: options.respectWindow ?? !immediate,
+  }).toISOString();
 }
 
 function scheduleAfterSend(lead: Lead, store: StoreData, justSentIndex: number) {
@@ -25,9 +43,10 @@ function scheduleAfterSend(lead: Lead, store: StoreData, justSentIndex: number) 
     }
     return;
   }
-  const delay = Math.max(0, steps[upcoming].delayMinutes) * 60 * 1000;
   lead.nextStepIndex = upcoming;
-  lead.nextFollowupAt = new Date(Date.now() + delay).toISOString();
+  scheduleStep(lead, store.settings, steps[upcoming], new Date(), {
+    respectWindow: true,
+  });
 }
 
 async function deliverStep(
@@ -261,6 +280,7 @@ export function detectWhatsAppAction(text: string): "booked" | "purchase" | null
     /\bbought\b/.test(value) ||
     /\bbuy\b/.test(value) ||
     value.includes("खरीद") ||
+    value.includes("पेमेंट") ||
     value === "sold"
   ) {
     return "purchase";
@@ -269,93 +289,12 @@ export function detectWhatsAppAction(text: string): "booked" | "purchase" | null
     /\bbooked\b/.test(value) ||
     /\bbooking\b/.test(value) ||
     /^book$/.test(value) ||
-    value.includes("बुक")
+    value.includes("बुक") ||
+    value.includes("बुकिंग")
   ) {
     return "booked";
   }
   return null;
-}
-
-function collectText(payload: unknown): string[] {
-  const chunks: string[] = [];
-  const visit = (value: unknown, depth = 0) => {
-    if (depth > 6 || value == null) return;
-    if (typeof value === "string") {
-      chunks.push(value);
-      return;
-    }
-    if (Array.isArray(value)) {
-      value.forEach((item) => visit(item, depth + 1));
-      return;
-    }
-    if (typeof value === "object") {
-      for (const [key, nested] of Object.entries(value as Record<string, unknown>)) {
-        if (
-          [
-            "text",
-            "body",
-            "title",
-            "reply",
-            "postbackText",
-            "postback",
-            "payload",
-            "id",
-            "button",
-            "phone",
-            "fullPhoneNumber",
-            "from",
-            "waId",
-          ].includes(key)
-        ) {
-          visit(nested, depth + 1);
-        } else if (key === "customer" || key === "message" || key === "data" || key === "interactive") {
-          visit(nested, depth + 1);
-        }
-      }
-    }
-  };
-  visit(payload);
-  return chunks;
-}
-
-export async function handleBotspaceWebhook(payload: unknown) {
-  const texts = collectText(payload);
-  const joined = texts.join(" ");
-  const phoneMatch =
-    texts.find((item) => item.startsWith("+") && item.length >= 11) ||
-    texts.find((item) => /^\d{10,15}$/.test(item.replace(/\D/g, "")));
-
-  if (!phoneMatch) {
-    return { ignored: true, reason: "no-phone" };
-  }
-
-  const action = detectWhatsAppAction(joined);
-  const lead = await withStore((store) => {
-    const found = findLeadByPhone(store, phoneMatch);
-    if (!found) return null;
-    found.lastInboundAt = new Date().toISOString();
-    appendMessage(store, {
-      leadId: found.id,
-      direction: "in",
-      channel: "whatsapp",
-      kind: action ? "button" : "session",
-      body: joined.slice(0, 500) || "Incoming WhatsApp",
-      status: "received",
-    });
-    touchLead(found);
-    return found;
-  });
-
-  if (!lead) return { ignored: true, reason: "unknown-lead" };
-  if (!action) return { ok: true, leadId: lead.id, action: null };
-
-  if (action === "booked") {
-    await markBooked(lead.id, "whatsapp");
-  } else {
-    await markPurchased(lead.id, "whatsapp");
-  }
-
-  return { ok: true, leadId: lead.id, action };
 }
 
 export async function enqueueImportedLead(store: StoreData, lead: Lead, startNow: boolean) {
@@ -369,7 +308,47 @@ export async function enqueueImportedLead(store: StoreData, lead: Lead, startNow
   lead.stage = "inquiry";
   lead.status = "following";
   lead.nextStepIndex = 0;
-  lead.nextFollowupAt = new Date().toISOString();
+  const first = activeSequence(store, "inquiry")[0];
+  if (first) {
+    scheduleStep(lead, store.settings, first, new Date());
+  } else {
+    lead.nextFollowupAt = new Date().toISOString();
+  }
+}
+
+export async function setLeadSchedule(leadId: string, nextFollowupAt: string | null) {
+  return withStore((store) => {
+    const lead = store.leads.find((item) => item.id === leadId);
+    if (!lead) throw new Error("Lead not found");
+    if (lead.status === "purchased") {
+      throw new Error("Purchased leads stay out of auto follow-up");
+    }
+    lead.autoFollowup = true;
+    if (lead.status === "paused" || lead.status === "exhausted") {
+      lead.status = lead.stage === "booking" ? "booked" : "following";
+    }
+    lead.nextFollowupAt = nextFollowupAt;
+    touchLead(lead);
+    return lead;
+  });
+}
+
+export function rescheduleWaitingLeads(store: StoreData) {
+  const now = Date.now();
+  for (const lead of store.leads) {
+    if (!lead.autoFollowup || lead.status === "purchased" || lead.status === "paused") {
+      continue;
+    }
+    const steps = activeSequence(store, lead.stage);
+    const step = steps[lead.nextStepIndex];
+    if (!step) continue;
+    const from = lead.lastOutboundAt ? new Date(lead.lastOutboundAt) : new Date();
+    scheduleStep(lead, store.settings, step, from, { respectWindow: true });
+    if (lead.nextFollowupAt && new Date(lead.nextFollowupAt).getTime() < now) {
+      lead.nextFollowupAt = new Date().toISOString();
+    }
+    touchLead(lead);
+  }
 }
 
 export async function setLeadPaused(leadId: string, paused: boolean) {
@@ -384,7 +363,14 @@ export async function setLeadPaused(leadId: string, paused: boolean) {
     } else {
       lead.autoFollowup = true;
       lead.status = lead.stage === "booking" ? "booked" : "following";
-      lead.nextFollowupAt = new Date().toISOString();
+      const steps = activeSequence(store, lead.stage);
+      const step = steps[lead.nextStepIndex] ?? steps[0];
+      if (step) {
+        lead.nextStepIndex = steps[lead.nextStepIndex] ? lead.nextStepIndex : 0;
+        scheduleStep(lead, store.settings, step, new Date());
+      } else {
+        lead.nextFollowupAt = new Date().toISOString();
+      }
     }
     touchLead(lead);
     return lead;

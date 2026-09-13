@@ -38,6 +38,10 @@ yarn-error.log*
 /data/store.json
 /data/*.tmp
 
+# github upload zip
+/shubhamLMS-github-upload.zip
+/shubhamLMS-missing-folders.zip
+
 # cloud agent scratch
 /agent-tools/
 /assets/
