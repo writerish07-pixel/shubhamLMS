@@ -97,7 +97,7 @@ export function TemplatesView() {
               : data.remote.error}
           </p>
           <div className="rounded-lg border border-[#c8102e]/30 bg-[#c8102e]/5 px-3 py-2 text-foreground">
-            1) पहला फॉलो-अप — <code>shubham_lead_followup_hi</code> · बटन{" "}
+            1) पहला फॉलो-अप — <code>shubham_lead_followup</code> · बटन{" "}
             <strong>बुकिंग</strong>
             <br />
             2) बुकिंग हो जाए — <code>shubham_booking_hi</code> · डिलीवरी पर बटन{" "}
