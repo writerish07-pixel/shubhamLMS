@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { detectWhatsAppAction, markBooked, markPurchased } from "@/lib/followup";
-import { parseBotspaceInbound } from "@/lib/inbound";
+import { applyDeliveryUpdate, detectWhatsAppAction, markBooked, markPurchased } from "@/lib/followup";
+import { parseBotspaceDelivery, parseBotspaceInbound } from "@/lib/inbound";
 import { recordInbound } from "@/lib/inbox";
 
 export const runtime = "nodejs";
@@ -15,6 +15,17 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const payload = await request.json().catch(() => ({}));
+  const delivery = parseBotspaceDelivery(payload);
+  if (delivery) {
+    const result = await applyDeliveryUpdate(delivery);
+    return NextResponse.json({
+      ok: true,
+      delivery: true,
+      status: delivery.status,
+      updated: result.updated,
+    });
+  }
+
   const parsed = parseBotspaceInbound(payload);
   if (!parsed) {
     return NextResponse.json({ ignored: true, reason: "not-inbound" });

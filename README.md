@@ -52,20 +52,26 @@ This app is wired to:
 
 Create these Meta-approved **Hindi (hi)** templates in BotSpace (quick-reply buttons required for the in-chat buttons). Open **टेम्पलेट** in the desk and press **फॉलो-अप से सिंक करें**. BotSpace Public API cannot list the template library, so this desk ships the Hindi catalog and maps the IDs below.
 
-| Template ID | Role | Quick reply | Variables |
-|---|---|---|---|
-| `shubham_enquiry_welcome_hi` | Enquiry welcome | बुकिंग | `{{1}}` name, `{{2}}` model |
-| `shubham_enquiry_nudge_hi` | Same-day reminder | बुकिंग | `{{1}}` name, `{{2}}` model |
-| `shubham_enquiry_testride_hi` | Test ride | बुकिंग | `{{1}}` name, `{{2}}` model |
-| `shubham_enquiry_offer_hi` | Exchange offer | बुकिंग | `{{1}}` name, `{{2}}` model |
-| `shubham_enquiry_emi_hi` | EMI / finance | बुकिंग | `{{1}}` name, `{{2}}` model |
-| `shubham_enquiry_last_hi` | Last enquiry reminder | बुकिंग | `{{1}}` name, `{{2}}` model |
-| `shubham_booking_confirm_hi` | Booking confirmed | खरीद | `{{1}}` name, `{{2}}` model |
-| `shubham_booking_payment_hi` | Payment reminder | खरीद | `{{1}}` name, `{{2}}` model |
-| `shubham_booking_last_hi` | Last booking reminder | खरीद | `{{1}}` name, `{{2}}` model |
-| `shubham_purchase_thanks_hi` | Purchase thank you | none | `{{1}}` name, `{{2}}` model |
+**Why WhatsApp was failing:** enquiry messages were sent as **MARKETING** templates (Meta drops them with 131049), the API posted **4 variables** into templates that only have `{{1}}` name and `{{2}}` model (132000), then fell back to a session message **outside the 24-hour window** (131047). Auto follow-up now sends the Hindi **UTILITY** lead-follow-up template below, with two variables, and only uses session text if the customer has messaged in the last 24 hours.
 
-Until templates are approved, the app still sends Hindi session text (works inside the 24-hour window) and treats `BOOKED` / `PURCHASE` / बुकिंग / खरीद replies as button taps.
+| Template ID | Role | Category | Quick reply | Variables |
+|---|---|---|---|---|
+| `shubham_lead_followup_hi` | Lead follow-up (create this first) | **UTILITY** | बुकिंग | `{{1}}` name, `{{2}}` model |
+| `shubham_enquiry_welcome_hi` | Enquiry welcome (optional) | UTILITY | बुकिंग | `{{1}}` name, `{{2}}` model |
+| `shubham_booking_confirm_hi` | Booking confirmed | UTILITY | खरीद | `{{1}}` name, `{{2}}` model |
+| `shubham_booking_payment_hi` | Payment reminder | UTILITY | खरीद | `{{1}}` name, `{{2}}` model |
+| `shubham_booking_last_hi` | Last booking reminder | UTILITY | खरीद | `{{1}}` name, `{{2}}` model |
+| `shubham_purchase_thanks_hi` | Purchase thank you | UTILITY | none | `{{1}}` name, `{{2}}` model |
+
+Older marketing enquiry templates (`shubham_enquiry_nudge_hi`, `testride`, `offer`, `emi`, `last`) stay in the catalog for copy, but they are **not** in the auto sequence because WhatsApp will not reliably deliver them.
+
+**Lead follow-up Meta body (paste in BotSpace, category Utility, language hi):**
+
+```
+नमस्ते {{1}} जी, शुभम मोटर्स जयपुर से आपकी {{2}} पूछताछ पर फॉलो-अप है। यह उसी रिक्वेस्ट का अपडेट है। जवाब दें या बुकिंग बटन दबाकर अपॉइंटमेंट कन्फर्म करें।
+```
+
+Until templates are approved, session text still works **inside** the 24-hour window, and `BOOKED` / `PURCHASE` / बुकिंग / खरीद replies are treated as button taps.
 
 Point the BotSpace incoming-message webhook at:
 

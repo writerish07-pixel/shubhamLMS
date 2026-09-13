@@ -76,10 +76,10 @@ export function TemplatesView() {
         <div>
           <h1 className="font-heading text-3xl tracking-wide">हिंदी टेम्पलेट</h1>
           <p className="mt-1 max-w-2xl text-muted-foreground">
-            BotSpace से लाइब्रेरी पढ़ी गई। Public API टेम्पलेट लिस्ट नहीं देता, इसलिए
-            यह डेस्क पूरे हिंदी कैटलॉग को फॉलो-अप से मैप करता है। BotSpace में भाषा{" "}
-            <strong>Hindi (hi)</strong> चुनें, बटन <strong>बुकिंग</strong> /{" "}
-            <strong>खरीद</strong> रखें।
+            लीड फॉलो-अप <strong>UTILITY</strong> टेम्पलेट से भेजें — Marketing
+            टेम्पलेट Meta अक्सर डिलीवर नहीं करता (error 131049)। नीचे हिंदी
+            UTILITY फॉलो-अप BotSpace में बनाएँ (भाषा <strong>Hindi / hi</strong>
+            , बटन <strong>बुकिंग</strong>), फिर <strong>फॉलो-अप से सिंक करें</strong>।
           </p>
         </div>
         <Button onClick={apply} disabled={syncing}>
@@ -97,6 +97,13 @@ export function TemplatesView() {
               ? "Remote templates loaded."
               : data.remote.error}
           </p>
+          <div className="rounded-lg border border-[#c8102e]/30 bg-[#c8102e]/5 px-3 py-2 text-foreground">
+            व्हाट्सऐप फेल होने की वजह: पूछताछ मार्केटिंग टेम्पलेट + गलत वेरिएबल
+            संख्या (4 भेजे, टेम्पलेट में 2) + 24 घंटे के बाहर सेशन मैसेज। अब डेस्क{" "}
+            <code>shubham_lead_followup_hi</code> UTILITY भेजता है, केवल{" "}
+            {"{{1}}"} नाम और {"{{2}}"} मॉडल, और सेशन मैसेज तभी जब ग्राहक ने 24 घंटे
+            में जवाब दिया हो।
+          </div>
           <p>
             अभी मैप: पूछताछ <code>{data.mapped.inquiry}</code> · बुकिंग{" "}
             <code>{data.mapped.booking}</code> · खरीद{" "}
@@ -146,7 +153,7 @@ export function TemplatesView() {
 
       <Card>
         <CardHeader>
-          <CardTitle>BotSpace में ये 10 टेम्पलेट बनाएँ</CardTitle>
+          <CardTitle>BotSpace में ये टेम्पलेट बनाएँ</CardTitle>
         </CardHeader>
         <CardContent className="overflow-x-auto text-sm">
           <table className="w-full min-w-[640px] text-left">
@@ -160,7 +167,10 @@ export function TemplatesView() {
             </thead>
             <tbody>
               {data.recommended.map((row) => (
-                <tr key={row.templateId} className="border-t border-border/70">
+                <tr
+                  key={row.stepId}
+                  className="border-t border-border/70"
+                >
                   <td className="py-2 pr-3">
                     <button
                       type="button"
@@ -172,7 +182,14 @@ export function TemplatesView() {
                     </button>
                   </td>
                   <td className="py-2 pr-3">hi</td>
-                  <td className="py-2 pr-3">{row.category}</td>
+                  <td className="py-2 pr-3">
+                    {row.category}
+                    {row.templateId === "shubham_lead_followup_hi"
+                      ? " · लीड फॉलो-अप (पहले यह बनाएँ)"
+                      : row.category === "MARKETING"
+                        ? " · ऑटो सीक्वेंस में नहीं"
+                        : ""}
+                  </td>
                   <td className="py-2">{row.buttonLabel ?? "—"}</td>
                 </tr>
               ))}
@@ -183,7 +200,7 @@ export function TemplatesView() {
 
       <div className="space-y-3">
         {data.recommended.map((row) => (
-          <Card key={row.templateId}>
+          <Card key={row.stepId}>
             <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <CardTitle>{row.nameHi}</CardTitle>
@@ -192,12 +209,17 @@ export function TemplatesView() {
                   {row.category} ·{" "}
                   {row.role === "inquiry"
                     ? "पूछताछ"
-                    : row.role === "booking"
-                      ? "बुकिंग"
-                      : "खरीद"}
+                    : row.role === "followup"
+                      ? "लीड फॉलो-अप"
+                      : row.role === "booking"
+                        ? "बुकिंग"
+                        : "खरीद"}
                 </p>
               </div>
               <div className="flex gap-2">
+                {row.templateId === "shubham_lead_followup_hi" ? (
+                  <Badge>पहले यह बनाएँ</Badge>
+                ) : null}
                 {row.buttonLabel ? (
                   <Badge>{row.buttonLabel}</Badge>
                 ) : (

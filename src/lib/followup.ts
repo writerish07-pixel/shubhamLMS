@@ -8,6 +8,8 @@ import {
   touchLead,
   withStore,
 } from "@/lib/store";
+import { isOpenSessionWindow, explainWhatsAppError } from "@/lib/whatsapp-errors";
+import type { ParsedDelivery } from "@/lib/inbound";
 import type { Lead, SequenceStep, Settings, StoreData } from "@/lib/types";
 
 function nextEnabledStep(steps: SequenceStep[], fromIndex: number) {
@@ -70,6 +72,7 @@ async function deliverStep(
     text: body,
     templateId,
     preferTemplate: options.forceTemplate ?? true,
+    sessionWindowOpen: isOpenSessionWindow(lead.lastInboundAt),
   });
 
   appendMessage(store, {
@@ -251,6 +254,7 @@ export async function markPurchased(leadId: string, source: "staff" | "whatsapp"
       text: body,
       templateId: settings.purchaseTemplateId,
       preferTemplate: true,
+      sessionWindowOpen: isOpenSessionWindow(lead.lastInboundAt),
     });
 
     appendMessage(store, {
@@ -374,5 +378,53 @@ export async function setLeadPaused(leadId: string, paused: boolean) {
     }
     touchLead(lead);
     return lead;
+  });
+}
+
+export async function applyDeliveryUpdate(delivery: ParsedDelivery) {
+  return withStore((store) => {
+    const byId = delivery.messageId
+      ? store.messages.find((message) => message.botspaceMessageId === delivery.messageId)
+      : undefined;
+    const byPhone =
+      !byId && delivery.phone
+        ? store.messages.find((message) => {
+            if (message.direction !== "out" || message.status === "failed") return false;
+            const lead = store.leads.find((item) => item.id === message.leadId);
+            if (!lead) return false;
+            return lead.phone
+              .replace(/\D/g, "")
+              .endsWith(delivery.phone!.replace(/\D/g, "").slice(-10));
+          })
+        : undefined;
+    const message = byId ?? byPhone;
+    if (!message) return { updated: false as const };
+
+    const lead = store.leads.find((item) => item.id === message.leadId);
+    if (delivery.status === "failed") {
+      const error = explainWhatsAppError(
+        delivery.failedReason || "WhatsApp delivery failed",
+      );
+      message.status = "failed";
+      message.error = error;
+      if (lead) {
+        lead.lastError = error;
+        lead.status = "failed";
+        if (!lead.nextFollowupAt) {
+          lead.nextFollowupAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+        }
+        touchLead(lead);
+      }
+    } else if (message.status === "failed") {
+      message.status = "sent";
+      message.error = undefined;
+      if (lead?.status === "failed") {
+        lead.status = lead.stage === "booking" ? "booked" : "following";
+        lead.lastError = null;
+        touchLead(lead);
+      }
+    }
+
+    return { updated: true as const, leadId: message.leadId, status: delivery.status };
   });
 }

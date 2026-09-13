@@ -1,6 +1,18 @@
+import { templateBodyVariables } from "@/lib/hindi-templates";
 import type { Settings } from "@/lib/types";
+import {
+  explainWhatsAppError,
+  extractProviderError,
+  sendStatusFailed,
+} from "@/lib/whatsapp-errors";
 
 const BASE = "https://public-api.bot.space";
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+}
 
 type SendResult = {
   ok: boolean;
@@ -11,6 +23,29 @@ type SendResult = {
   error?: string;
   raw?: unknown;
 };
+
+function failResult(error: string | undefined, raw?: unknown): SendResult {
+  return {
+    ok: false,
+    error: explainWhatsAppError(error || "WhatsApp send failed"),
+    raw,
+  };
+}
+
+function unwrapSendPayload(raw: unknown): {
+  id?: string;
+  conversationId?: string;
+  status?: string;
+} {
+  const payload = asRecord(raw) ?? {};
+  const inner = asRecord(payload.data) ?? payload;
+  return {
+    id: typeof inner.id === "string" ? inner.id : undefined,
+    conversationId:
+      typeof inner.conversationId === "string" ? inner.conversationId : undefined,
+    status: typeof inner.status === "string" ? inner.status : undefined,
+  };
+}
 
 async function botspace<T>(
   settings: Settings,
@@ -37,14 +72,68 @@ async function botspace<T>(
   }
 
   if (!response.ok) {
-    const error =
+    const error = extractProviderError(
+      raw,
       (raw as { message?: string; error?: string })?.message ||
-      (raw as { error?: string })?.error ||
-      `BotSpace HTTP ${response.status}`;
+        (raw as { error?: string })?.error ||
+        `BotSpace HTTP ${response.status}`,
+    );
     return { ok: false, status: response.status, data: null, error, raw };
   }
 
+  const envelope = asRecord(raw);
+  if (envelope && envelope.success === false) {
+    return {
+      ok: false,
+      status: response.status,
+      data: null,
+      error: extractProviderError(raw, "BotSpace request failed"),
+      raw,
+    };
+  }
+
   return { ok: true, status: response.status, data: raw as T, error: undefined, raw };
+}
+
+export async function getMessageDeliveryStatus(
+  settings: Settings,
+  messageId: string,
+): Promise<{ status?: string; failedReason?: string; raw: unknown; ok: boolean }> {
+  const result = await botspace<{
+    data?: { status?: string; failedReason?: string };
+    status?: string;
+    failedReason?: string;
+  }>(settings, `/v1/${settings.channelId}/message/${messageId}/delivery-status`);
+  const payload = asRecord(result.data) ?? {};
+  const inner = asRecord(payload.data) ?? payload;
+  return {
+    ok: result.ok,
+    status: typeof inner.status === "string" ? inner.status : undefined,
+    failedReason:
+      typeof inner.failedReason === "string"
+        ? inner.failedReason
+        : typeof inner.failed_reason === "string"
+          ? inner.failed_reason
+          : undefined,
+    raw: result.raw,
+  };
+}
+
+async function confirmDelivery(
+  settings: Settings,
+  result: SendResult,
+): Promise<SendResult> {
+  if (!result.ok || !result.messageId) return result;
+  await new Promise((resolve) => setTimeout(resolve, 900));
+  const delivery = await getMessageDeliveryStatus(settings, result.messageId);
+  if (!delivery.ok || !delivery.status) return result;
+  if (sendStatusFailed(delivery.status)) {
+    return failResult(
+      delivery.failedReason || `WhatsApp delivery ${delivery.status}`,
+      delivery.raw,
+    );
+  }
+  return result;
 }
 
 export async function sendTemplateMessage(
@@ -66,21 +155,22 @@ export async function sendTemplateMessage(
       name: input.name,
       phone: input.phone,
       templateId: input.templateId,
-      variables: input.variables,
+      variables: input.variables.map((value) => String(value ?? "")),
     }),
   });
 
-  if (!result.ok) return { ok: false, error: result.error, raw: result.raw };
-  const payload = result.data as {
-    data?: { id?: string; conversationId?: string };
-    id?: string;
-    conversationId?: string;
-  };
-  const inner = payload?.data ?? payload;
+  if (!result.ok) return failResult(result.error, result.raw);
+  const inner = unwrapSendPayload(result.raw);
+  if (sendStatusFailed(inner.status)) {
+    return failResult(
+      extractProviderError(result.raw, `Template send ${inner.status}`),
+      result.raw,
+    );
+  }
   return {
     ok: true,
-    messageId: inner?.id,
-    conversationId: inner?.conversationId,
+    messageId: inner.id,
+    conversationId: inner.conversationId,
     raw: result.raw,
   };
 }
@@ -100,13 +190,18 @@ export async function sendSessionMessage(
     }),
   });
 
-  if (!result.ok) return { ok: false, error: result.error, raw: result.raw };
-  const inner = (result.data as { data?: { id?: string; conversationId?: string } })?.data ??
-    (result.data as { id?: string; conversationId?: string });
+  if (!result.ok) return failResult(result.error, result.raw);
+  const inner = unwrapSendPayload(result.raw);
+  if (sendStatusFailed(inner.status)) {
+    return failResult(
+      extractProviderError(result.raw, `Session send ${inner.status}`),
+      result.raw,
+    );
+  }
   return {
     ok: true,
-    messageId: inner?.id,
-    conversationId: inner?.conversationId,
+    messageId: inner.id,
+    conversationId: inner.conversationId,
     raw: result.raw,
   };
 }
@@ -146,6 +241,7 @@ export async function sendLeadWhatsApp(
     text: string;
     templateId?: string;
     preferTemplate: boolean;
+    sessionWindowOpen?: boolean;
   },
 ): Promise<SendResult> {
   if (!settings.liveWhatsApp) {
@@ -160,7 +256,7 @@ export async function sendLeadWhatsApp(
     }).catch(() => undefined);
   }
 
-  const variables = [input.name, input.model, settings.businessName, settings.city];
+  const variables = templateBodyVariables(input.templateId, input.name, input.model);
   let lastError: string | undefined;
 
   if (input.preferTemplate && input.templateId) {
@@ -170,22 +266,26 @@ export async function sendLeadWhatsApp(
       templateId: input.templateId,
       variables,
     });
-    if (template.ok) return template;
+    if (template.ok) return confirmDelivery(settings, template);
     lastError = template.error;
   }
 
-  const session = await sendSessionMessage(settings, {
-    name: input.name,
-    phone: input.phone,
-    text: input.text,
-  });
+  const canUseSession = !input.preferTemplate || input.sessionWindowOpen === true;
+  if (canUseSession) {
+    const session = await sendSessionMessage(settings, {
+      name: input.name,
+      phone: input.phone,
+      text: input.text,
+    });
+    if (session.ok) return confirmDelivery(settings, session);
+    lastError = [lastError, session.error].filter(Boolean).join(" | ");
+    return failResult(lastError, session.raw);
+  }
 
-  if (session.ok) return session;
-  return {
-    ok: false,
-    error: [lastError, session.error].filter(Boolean).join(" | ") || "WhatsApp send failed",
-    raw: session.raw,
-  };
+  return failResult(
+    lastError ||
+      "WhatsApp template send failed and the 24-hour session window is closed. Create UTILITY template shubham_lead_followup_hi in BotSpace (Hindi, बुकिंग button).",
+  );
 }
 
 export type HarvestedTemplate = {

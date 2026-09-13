@@ -103,6 +103,7 @@ export async function sendStaffReply(leadId: string, text: string) {
       model: lead.model,
       text: body,
       preferTemplate: false,
+      sessionWindowOpen: true,
     });
 
     appendMessage(store, {
