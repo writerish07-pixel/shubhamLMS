@@ -12,7 +12,7 @@ Sales desk for **Shubham Motors**, Hero Motocorp dealer in Jaipur. Import enquir
 
 Install on an Android phone: open the live URL in **Chrome** → menu → **Add to Home screen** / **Install app**, or use the in-app **ऐप** page.
 
-Staff can also press बुकिंग / खरीद on the lead row. Customer taps and `BOOKED` / `PURCHASE` / बुकिंग / खरीद replies land on `/api/webhooks/botspace` and show in Inbox.
+Staff can also press बुकिंग / खरीद on the lead row. Customer taps and `BOOKED` / `BOUGHT` / `PURCHASE` / बुकिंग / खरीद replies land on `/api/webhooks/botspace` and show in Inbox.
 
 Set follow-up **interval** (30 min / 4 hours / 1 day) and **send time** (IST, e.g. 11:00) on the Follow-up page. Each lead also has a next-WhatsApp time picker. Auto messages stay inside showroom hours (default 09:30–20:00 IST).
 
@@ -50,28 +50,33 @@ This app is wired to:
 - Channel ID: `69ba3b443c58de2b169911a3`
 - WhatsApp: `+91 7240516000`
 
-Create these Meta-approved **Hindi (hi)** templates in BotSpace (quick-reply buttons required for the in-chat buttons). Open **टेम्पलेट** in the desk and press **फॉलो-अप से सिंक करें**. BotSpace Public API cannot list the template library, so this desk ships the Hindi catalog and maps the IDs below.
+Create these **3** Meta-approved **Hindi (hi) UTILITY** templates in BotSpace. Open **टेम्पलेट** in the desk and press **फॉलो-अप से सिंक करें**.
 
-**Why WhatsApp was failing:** enquiry messages were sent as **MARKETING** templates (Meta drops them with 131049), the API posted **4 variables** into templates that only have `{{1}}` name and `{{2}}` model (132000), then fell back to a session message **outside the 24-hour window** (131047). Auto follow-up now sends the Hindi **UTILITY** lead-follow-up template below, with two variables, and only uses session text if the customer has messaged in the last 24 hours.
+| Template ID | When | Quick reply | Variables |
+|---|---|---|---|
+| `shubham_lead_followup_hi` | First follow-up on a new lead | **बुकिंग** | `{{1}}` name, `{{2}}` model |
+| `shubham_booking_hi` | After the customer taps बुकिंग | **खरीद** (bought, after delivery) | `{{1}}` name, `{{2}}` model |
+| `shubham_bought_hi` | After delivery / खरीद | none — stops auto follow-up | `{{1}}` name, `{{2}}` model |
 
-| Template ID | Role | Category | Quick reply | Variables |
-|---|---|---|---|---|
-| `shubham_lead_followup_hi` | Lead follow-up (create this first) | **UTILITY** | बुकिंग | `{{1}}` name, `{{2}}` model |
-| `shubham_enquiry_welcome_hi` | Enquiry welcome (optional) | UTILITY | बुकिंग | `{{1}}` name, `{{2}}` model |
-| `shubham_booking_confirm_hi` | Booking confirmed | UTILITY | खरीद | `{{1}}` name, `{{2}}` model |
-| `shubham_booking_payment_hi` | Payment reminder | UTILITY | खरीद | `{{1}}` name, `{{2}}` model |
-| `shubham_booking_last_hi` | Last booking reminder | UTILITY | खरीद | `{{1}}` name, `{{2}}` model |
-| `shubham_purchase_thanks_hi` | Purchase thank you | UTILITY | none | `{{1}}` name, `{{2}}` model |
-
-Older marketing enquiry templates (`shubham_enquiry_nudge_hi`, `testride`, `offer`, `emi`, `last`) stay in the catalog for copy, but they are **not** in the auto sequence because WhatsApp will not reliably deliver them.
-
-**Lead follow-up Meta body (paste in BotSpace, category Utility, language hi):**
+**1. First follow-up**
 
 ```
-नमस्ते {{1}} जी, शुभम मोटर्स जयपुर से आपकी {{2}} पूछताछ पर फॉलो-अप है। यह उसी रिक्वेस्ट का अपडेट है। जवाब दें या बुकिंग बटन दबाकर अपॉइंटमेंट कन्फर्म करें।
+नमस्ते {{1}} जी, शुभम मोटर्स जयपुर से आपकी {{2}} पूछताछ पर फॉलो-अप है। बुकिंग कन्फर्म करने के लिए बुकिंग बटन दबाएँ।
 ```
 
-Until templates are approved, session text still works **inside** the 24-hour window, and `BOOKED` / `PURCHASE` / बुकिंग / खरीद replies are treated as button taps.
+**2. Booking** (customer taps खरीद when delivery is done)
+
+```
+नमस्ते {{1}} जी, आपकी {{2}} बुकिंग शुभम मोटर्स जयपुर पर कन्फर्म है। डिलीवरी हो जाने पर खरीद बटन दबाएँ।
+```
+
+**3. Bought**
+
+```
+नमस्ते {{1}} जी, आपकी {{2}} खरीद शुभम मोटर्स जयपुर पर कन्फर्म है। डिलीवरी नोट हो गई है। ऑटो फॉलो-अप अब बंद है। धन्यवाद।
+```
+
+Until templates are approved, session text still works **inside** the 24-hour window, and `BOOKED` / `BOUGHT` / `PURCHASE` / बुकिंग / खरीद replies are treated as button taps.
 
 Point the BotSpace incoming-message webhook at:
 

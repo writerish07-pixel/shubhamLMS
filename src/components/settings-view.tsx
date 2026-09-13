@@ -67,11 +67,11 @@ export function SettingsView() {
           <h1 className="font-heading text-3xl tracking-wide">BotSpace</h1>
           <p className="mt-1 max-w-2xl text-muted-foreground">
             Connected to Shubham Motors channel {settings.channelId}. हिंदी
-            टेम्पलेट{" "}
+            टेम्पलेट सिर्फ 3 हैं — फॉलो-अप, बुकिंग, खरीद। IDs{" "}
             <a className="underline" href="/templates">
               टेम्पलेट
             </a>{" "}
-            पेज पर हैं। BotSpace में भाषा Hindi चुनें, बटन बुकिंग / खरीद रखें।
+            पेज पर हैं। BotSpace में भाषा Hindi चुनें।
           </p>
         </div>
         <Button onClick={save} disabled={saving}>
@@ -124,35 +124,32 @@ export function SettingsView() {
         </CardHeader>
         <CardContent className="grid gap-3 sm:grid-cols-3">
           <Field
-            label="पूछताछ / बुकिंग"
+            label="1. फॉलो-अप · बुकिंग"
             value={settings.inquiryTemplateId}
             onChange={(inquiryTemplateId) =>
               setSettings({ ...settings, inquiryTemplateId })
             }
           />
           <Field
-            label="बुकिंग / खरीद"
+            label="2. बुकिंग · खरीद"
             value={settings.bookingTemplateId}
             onChange={(bookingTemplateId) =>
               setSettings({ ...settings, bookingTemplateId })
             }
           />
           <Field
-            label="खरीद धन्यवाद"
+            label="3. खरीद"
             value={settings.purchaseTemplateId}
             onChange={(purchaseTemplateId) =>
               setSettings({ ...settings, purchaseTemplateId })
             }
           />
           <p className="text-sm text-muted-foreground sm:col-span-3">
-            Meta only delivers buttons on approved Hindi templates. Enquiry
-            follow-up must be <strong>UTILITY</strong>{" "}
-            <code>{settings.inquiryTemplateId}</code> (बुकिंग) — Marketing
-            templates are dropped by WhatsApp. Booking{" "}
-            <code>{settings.bookingTemplateId}</code> (खरीद), purchase{" "}
-            <code>{settings.purchaseTemplateId}</code>. Variables: first name
-            then model. Create the Hindi UTILITY template in BotSpace before
-            sending live.
+            सिर्फ 3 हिंदी UTILITY टेम्पलेट: 1) फॉलो-अप{" "}
+            <code>{settings.inquiryTemplateId}</code> (बुकिंग बटन), 2) बुकिंग{" "}
+            <code>{settings.bookingTemplateId}</code> (डिलीवरी पर खरीद बटन), 3)
+            खरीद <code>{settings.purchaseTemplateId}</code>। वेरिएबल: नाम फिर
+            मॉडल। BotSpace में बनाकर Approve होने के बाद लाइव भेजें।
           </p>
         </CardContent>
       </Card>

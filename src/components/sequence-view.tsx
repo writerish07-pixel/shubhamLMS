@@ -119,12 +119,12 @@ export function SequenceView() {
       </Card>
 
       <SequenceEditor
-        title="पूछताछ सीक्वेंस · बुकिंग बटन"
+        title="1. फॉलो-अप · बुकिंग बटन"
         steps={inquiry}
         onChange={setInquiry}
       />
       <SequenceEditor
-        title="बुकिंग सीक्वेंस · खरीद बटन"
+        title="2. बुकिंग · खरीद बटन (डिलीवरी)"
         steps={booking}
         onChange={setBooking}
       />
