@@ -145,16 +145,14 @@ export function SettingsView() {
             }
           />
           <p className="text-sm text-muted-foreground sm:col-span-3">
-            Meta only delivers buttons on approved Hindi templates. IDs are on
-            the{" "}
-            <a className="underline" href="/templates">
-              टेम्पलेट
-            </a>{" "}
-            page: inquiry <code>{settings.inquiryTemplateId}</code> (बुकिंग),
-            booking <code>{settings.bookingTemplateId}</code> (खरीद), purchase{" "}
-            <code>{settings.purchaseTemplateId}</code>. Variables: name then
-            model. Until Meta approves them, session text still works and
-            बुकिंग / खरीद / BOOKED / PURCHASE replies are accepted.
+            Meta only delivers buttons on approved Hindi templates. Enquiry
+            follow-up must be <strong>UTILITY</strong>{" "}
+            <code>{settings.inquiryTemplateId}</code> (बुकिंग) — Marketing
+            templates are dropped by WhatsApp. Booking{" "}
+            <code>{settings.bookingTemplateId}</code> (खरीद), purchase{" "}
+            <code>{settings.purchaseTemplateId}</code>. Variables: first name
+            then model. Create the Hindi UTILITY template in BotSpace before
+            sending live.
           </p>
         </CardContent>
       </Card>

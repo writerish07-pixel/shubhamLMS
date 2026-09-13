@@ -1,7 +1,12 @@
-import { HINDI_TEMPLATES, toHindiStep } from "@/lib/hindi-templates";
+import {
+  defaultInquirySequence,
+  HINDI_TEMPLATES,
+  LEAD_FOLLOWUP_TEMPLATE_ID,
+  toHindiStep,
+} from "@/lib/hindi-templates";
 import type { SequenceStep, Settings } from "@/lib/types";
 
-export const STORE_VERSION = 2;
+export const STORE_VERSION = 3;
 
 export const DEFAULT_SETTINGS: Settings = {
   apiKey:
@@ -15,7 +20,7 @@ export const DEFAULT_SETTINGS: Settings = {
   showroomAddress: "शुभम मोटर्स, हीरो मोटोकॉर्प डीलर, जयपुर",
   liveWhatsApp: true,
   createBotspaceContacts: true,
-  inquiryTemplateId: "shubham_enquiry_welcome_hi",
+  inquiryTemplateId: LEAD_FOLLOWUP_TEMPLATE_ID,
   bookingTemplateId: "shubham_booking_confirm_hi",
   purchaseTemplateId: "shubham_purchase_thanks_hi",
   templateLanguage: "hi",
@@ -23,9 +28,7 @@ export const DEFAULT_SETTINGS: Settings = {
   followupWindowEnd: "20:00",
 };
 
-export const DEFAULT_INQUIRY_SEQUENCE: SequenceStep[] = HINDI_TEMPLATES.filter(
-  (row) => row.role === "inquiry",
-).map(toHindiStep);
+export const DEFAULT_INQUIRY_SEQUENCE: SequenceStep[] = defaultInquirySequence();
 
 export const DEFAULT_BOOKING_SEQUENCE: SequenceStep[] = HINDI_TEMPLATES.filter(
   (row) => row.role === "booking",

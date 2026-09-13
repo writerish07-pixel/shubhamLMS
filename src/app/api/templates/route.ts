@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { inspectBotspaceTemplates } from "@/lib/botspace";
-import { applyHindiTemplateCatalog, HINDI_TEMPLATES } from "@/lib/hindi-templates";
+import { applyHindiTemplateCatalog, HINDI_TEMPLATES, LEAD_FOLLOWUP_TEMPLATE_ID } from "@/lib/hindi-templates";
 import { withStore } from "@/lib/store";
 
 export const runtime = "nodejs";
@@ -47,7 +47,15 @@ export async function GET() {
       booking: snapshot.bookingSequence,
     },
     usedTemplateIds: snapshot.usedTemplateIds,
-    recommended: HINDI_TEMPLATES,
+    recommended: [...HINDI_TEMPLATES].sort((a, b) => {
+      const rank = (row: (typeof HINDI_TEMPLATES)[number]) =>
+        row.templateId === LEAD_FOLLOWUP_TEMPLATE_ID
+          ? 0
+          : row.category === "UTILITY"
+            ? 1
+            : 2;
+      return rank(a) - rank(b);
+    }),
     remote,
   });
 }
