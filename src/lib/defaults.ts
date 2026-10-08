@@ -3,12 +3,13 @@ import {
   BOOKING_TEMPLATE_ID,
   defaultBookingSequence,
   defaultInquirySequence,
+  FESTIVE_TEMPLATE_ID,
   LEAD_FOLLOWUP_TEMPLATE_ID,
   templateByRole,
 } from "@/lib/hindi-templates";
 import type { SequenceStep, Settings } from "@/lib/types";
 
-export const STORE_VERSION = 5;
+export const STORE_VERSION = 6;
 
 export const DEFAULT_SETTINGS: Settings = {
   apiKey:
@@ -25,6 +26,7 @@ export const DEFAULT_SETTINGS: Settings = {
   inquiryTemplateId: LEAD_FOLLOWUP_TEMPLATE_ID,
   bookingTemplateId: BOOKING_TEMPLATE_ID,
   purchaseTemplateId: BOUGHT_TEMPLATE_ID,
+  festiveTemplateId: FESTIVE_TEMPLATE_ID,
   templateLanguage: "hi",
   followupWindowStart: "09:30",
   followupWindowEnd: "20:00",

@@ -55,16 +55,16 @@ export function sendStatusFailed(status: unknown): boolean {
 export function explainWhatsAppError(error: string): string {
   const text = error.toLowerCase();
   if (/132000|number of param|parameter/.test(text)) {
-    return `${error} — Template variables must be name then model (2 values). Marketing/utility body uses {{1}} and {{2}} only.`;
+    return `${error} — Follow-up templates use name then model ({{1}}, {{2}}). The festive template uses name, model, then offer ({{1}}, {{2}}, {{3}}).`;
   }
   if (/132001|template does not exist|template not found|not approved/.test(text)) {
-    return `${error} — Create the 3 Hindi UTILITY templates in BotSpace: shubham_lead_followup (बुकिंग), shubham_booking_hi (खरीद), shubham_bought_hi. Language hi.`;
+    return `${error} — Create Hindi UTILITY templates in BotSpace: shubham_lead_followup (बुकिंग), shubham_booking_hi (खरीद), shubham_bought_hi, shubham_festive_offer. Language hi. After festive approval, update only that Template ID in Settings.`;
   }
   if (/131047|24 hour|re-engagement|session window/.test(text)) {
     return `${error} — Free-form WhatsApp only works for 24 hours after the customer messages. New leads need an approved template.`;
   }
   if (/131049|healthy ecosystem|marketing/.test(text)) {
-    return `${error} — Meta dropped a MARKETING template. Use the 3 Hindi UTILITY templates (follow-up, booking, bought).`;
+    return `${error} — Meta dropped a MARKETING template. Use Hindi UTILITY templates (follow-up, booking, bought, festive).`;
   }
   if (/131026|not on whatsapp|not a valid whatsapp/.test(text)) {
     return `${error} — This mobile number is not on WhatsApp.`;

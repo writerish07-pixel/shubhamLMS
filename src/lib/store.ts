@@ -59,6 +59,7 @@ async function loadFromDisk(): Promise<StoreData> {
         ...lead,
         unreadCount: lead.unreadCount ?? 0,
         lastReadAt: lead.lastReadAt ?? null,
+        festiveOfferSentAt: lead.festiveOfferSentAt ?? null,
       })),
       messages: parsed.messages ?? [],
     };

@@ -45,6 +45,8 @@ export function LeadsView() {
   const [filter, setFilter] = useState<(typeof FILTERS)[number]["id"]>("all");
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [festiveBusy, setFestiveBusy] = useState(false);
+  const [festiveEligible, setFestiveEligible] = useState<number | null>(null);
   const [form, setForm] = useState({
     name: "",
     mobile: "",
@@ -56,6 +58,12 @@ export function LeadsView() {
       .then((response) => response.json())
       .then((data: { leads: Lead[] }) => setLeads(data.leads ?? []))
       .catch(() => toast.error("Could not load leads"));
+    fetch("/api/leads/festive-offer")
+      .then((response) => response.json())
+      .then((data: { eligibleCount?: number }) =>
+        setFestiveEligible(data.eligibleCount ?? 0),
+      )
+      .catch(() => undefined);
   }, []);
 
   useEffect(() => {
@@ -106,10 +114,41 @@ export function LeadsView() {
           <h1 className="font-heading text-3xl tracking-wide">Leads</h1>
           <p className="mt-1 text-muted-foreground">
             Booked sends the booking WhatsApp with a Purchase button. Purchase
-            takes the lead out of auto follow-up.
+            takes the lead out of auto follow-up. Festive offer is a one-shot
+            WhatsApp (HDFC 5% / max ₹5,000 also for models not in the Hero PDF).
           </p>
         </div>
         <div className="flex gap-2">
+          <Button
+            variant="outline"
+            disabled={festiveBusy || !festiveEligible}
+            onClick={async () => {
+              setFestiveBusy(true);
+              try {
+                const response = await fetch("/api/leads/festive-offer", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ limit: 25 }),
+                });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || "Send failed");
+                toast.success(
+                  `फेस्टिव भेजा: ${data.sent} · फेल: ${data.failed} · बाकी: ${data.remaining}`,
+                );
+                load();
+              } catch (error) {
+                toast.error(
+                  error instanceof Error ? error.message : "Festive send failed",
+                );
+              } finally {
+                setFestiveBusy(false);
+              }
+            }}
+          >
+            {festiveBusy
+              ? "Festive भेज रहे हैं…"
+              : `Send festive (${festiveEligible ?? 0})`}
+          </Button>
           <Button variant="outline" render={<Link href="/import" />}>
             Bulk import
           </Button>

@@ -67,7 +67,8 @@ export function SettingsView() {
           <h1 className="font-heading text-3xl tracking-wide">BotSpace</h1>
           <p className="mt-1 max-w-2xl text-muted-foreground">
             Connected to Shubham Motors channel {settings.channelId}. हिंदी
-            टेम्पलेट सिर्फ 3 हैं — फॉलो-अप, बुकिंग, खरीद। IDs{" "}
+            टेम्पलेट 3 फॉलो-अप + 1 फेस्टिव हैं। Approve के बाद सिर्फ festive
+            Template ID यहीं बदलें। IDs{" "}
             <a className="underline" href="/templates">
               टेम्पलेट
             </a>{" "}
@@ -122,7 +123,7 @@ export function SettingsView() {
         <CardHeader>
           <CardTitle>Approved template IDs</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-3 sm:grid-cols-3">
+        <CardContent className="grid gap-3 sm:grid-cols-2">
           <Field
             label="1. फॉलो-अप · बुकिंग"
             value={settings.inquiryTemplateId}
@@ -144,12 +145,19 @@ export function SettingsView() {
               setSettings({ ...settings, purchaseTemplateId })
             }
           />
-          <p className="text-sm text-muted-foreground sm:col-span-3">
-            सिर्फ 3 हिंदी UTILITY टेम्पलेट: 1) फॉलो-अप{" "}
-            <code>{settings.inquiryTemplateId}</code> (बुकिंग बटन), 2) बुकिंग{" "}
-            <code>{settings.bookingTemplateId}</code> (डिलीवरी पर खरीद बटन), 3)
-            खरीद <code>{settings.purchaseTemplateId}</code>। वेरिएबल: नाम फिर
-            मॉडल। BotSpace में बनाकर Approve होने के बाद लाइव भेजें।
+          <Field
+            label="4. फेस्टिव ऑफर (Approve के बाद यही ID बदलें)"
+            value={settings.festiveTemplateId ?? ""}
+            onChange={(festiveTemplateId) =>
+              setSettings({ ...settings, festiveTemplateId })
+            }
+          />
+          <p className="text-sm text-muted-foreground sm:col-span-2">
+            फॉलो-अप 3 टेम्पलेट वैसे ही रहते हैं। फेस्टिव{" "}
+            <code>{settings.festiveTemplateId}</code> लीड्स को एक बार भेजने के
+            लिए है (खरीदी लीड छोड़कर)। वेरिएबल: नाम, मॉडल, फिर कैश बोनस / HDFC
+            5% (अधिकतम ₹5,000)। BotSpace में Approve होने के बाद सिर्फ यह ID
+            अपडेट करें।
           </p>
         </CardContent>
       </Card>

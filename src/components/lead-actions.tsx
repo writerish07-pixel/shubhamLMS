@@ -73,6 +73,26 @@ export function LeadActions({
       >
         {busy === "purchase" ? "भेज रहे हैं…" : "खरीद"}
       </Button>
+      {!purchased ? (
+        <Button
+          size={compact ? "sm" : "default"}
+          variant="outline"
+          disabled={busy !== null || Boolean(lead.festiveOfferSentAt)}
+          onClick={() =>
+            run(
+              "festive",
+              `/api/leads/${lead.id}/festive`,
+              "फेस्टिव ऑफर WhatsApp भेजा गया",
+            )
+          }
+        >
+          {busy === "festive"
+            ? "भेज रहे हैं…"
+            : lead.festiveOfferSentAt
+              ? "Festive sent"
+              : "Festive"}
+        </Button>
+      ) : null}
       {!compact && lead.autoFollowup && !purchased ? (
         <Button
           size="sm"

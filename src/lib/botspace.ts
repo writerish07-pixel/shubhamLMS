@@ -242,6 +242,7 @@ export async function sendLeadWhatsApp(
     templateId?: string;
     preferTemplate: boolean;
     sessionWindowOpen?: boolean;
+    variables?: string[];
   },
 ): Promise<SendResult> {
   if (!settings.liveWhatsApp) {
@@ -256,7 +257,8 @@ export async function sendLeadWhatsApp(
     }).catch(() => undefined);
   }
 
-  const variables = templateBodyVariables(input.templateId, input.name, input.model);
+  const variables =
+    input.variables ?? templateBodyVariables(input.templateId, input.name, input.model);
   let lastError: string | undefined;
 
   if (input.preferTemplate && input.templateId) {
@@ -284,7 +286,7 @@ export async function sendLeadWhatsApp(
 
   return failResult(
     lastError ||
-      "WhatsApp template send failed and the 24-hour session window is closed. Create the 3 Hindi UTILITY templates in BotSpace: shubham_lead_followup, shubham_booking_hi, shubham_bought_hi.",
+      "WhatsApp template send failed and the 24-hour session window is closed. Create the Hindi UTILITY templates in BotSpace: shubham_lead_followup, shubham_booking_hi, shubham_bought_hi, and shubham_festive_offer.",
   );
 }
 
@@ -368,7 +370,7 @@ export async function inspectBotspaceTemplates(
     docsUrl: "https://public-api.bot.space",
     publicPaths: BOTSPACE_PUBLIC_PATHS,
     error:
-      "BotSpace Public API v1 can send templates but cannot list the template library. Hindi copy below is what this desk uses. Create the same Template IDs in BotSpace (language hi), then press sync.",
+      "BotSpace Public API v1 can send templates but cannot list the template library. Hindi copy below is what this desk uses. Create the same Template IDs in BotSpace (language hi), then press sync. After festive approval, change only the festive Template ID in Settings.",
     harvested,
     harvestedFromMessages: uniqueIds.length,
   };

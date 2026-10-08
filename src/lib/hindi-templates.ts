@@ -1,4 +1,7 @@
+import { festiveOfferLine } from "@/lib/festive-offer";
 import type { ButtonKind, SequenceStep, StoreData } from "@/lib/types";
+
+export type HindiTemplateRole = "inquiry" | "booking" | "purchase" | "festive";
 
 export type HindiTemplate = {
   templateId: string;
@@ -6,7 +9,7 @@ export type HindiTemplate = {
   nameHi: string;
   language: "hi";
   category: "UTILITY";
-  role: "inquiry" | "booking" | "purchase";
+  role: HindiTemplateRole;
   button: ButtonKind | null;
   buttonLabel: string | null;
   sessionBody: string;
@@ -19,6 +22,15 @@ export type HindiTemplate = {
 export const LEAD_FOLLOWUP_TEMPLATE_ID = "shubham_lead_followup";
 export const BOOKING_TEMPLATE_ID = "shubham_booking_hi";
 export const BOUGHT_TEMPLATE_ID = "shubham_bought_hi";
+export const FESTIVE_TEMPLATE_ID = "shubham_festive_offer";
+
+export function isFestiveTemplate(templateId: string | undefined): boolean {
+  if (!templateId) return false;
+  if (templateId === FESTIVE_TEMPLATE_ID) return true;
+  return HINDI_TEMPLATES.some(
+    (item) => item.role === "festive" && item.templateId === templateId,
+  );
+}
 
 export function templateBodyVariables(
   templateId: string | undefined,
@@ -27,6 +39,9 @@ export function templateBodyVariables(
 ): string[] {
   const firstName = name.trim().split(/\s+/)[0] || name.trim();
   const row = HINDI_TEMPLATES.find((item) => item.templateId === templateId);
+  if (isFestiveTemplate(templateId) || row?.role === "festive" || (row?.variableCount ?? 0) >= 3) {
+    return [firstName, model, festiveOfferLine(model)];
+  }
   const count = row?.variableCount ?? 2;
   return [firstName, model].slice(0, Math.max(0, count)).map((value) => String(value ?? ""));
 }
@@ -100,6 +115,30 @@ export const HINDI_TEMPLATES: HindiTemplate[] = [
 टीम शुभम मोटर्स`,
     metaBody: `नमस्ते {{1}} जी, आपकी {{2}} खरीद शुभम मोटर्स जयपुर पर कन्फर्म है। डिलीवरी नोट हो गई है। ऑटो फॉलो-अप अब बंद है। धन्यवाद।`,
   },
+  {
+    stepId: "festive-0",
+    templateId: FESTIVE_TEMPLATE_ID,
+    name: "Festive offer",
+    nameHi: "फेस्टिव ऑफर",
+    language: "hi",
+    category: "UTILITY",
+    role: "festive",
+    button: "booked",
+    buttonLabel: "बुकिंग",
+    delayMinutes: 0,
+    variableCount: 3,
+    sessionBody: `नमस्ते {{firstName}} जी,
+
+शुभम मोटर्स, जयपुर से *Hero Festive 2026* ऑफर है। आपकी *{{model}}* पर *{{cashBonus}}*।
+
+ऑफर 8 से 20 अक्टूबर 2026 तक। बुकिंग कन्फर्म करने के लिए *बुकिंग* बटन दबाएँ, या इस चैट पर जवाब दें।
+
+शोरूम: {{address}}
+कॉल / व्हाट्सऐप: {{dealerPhone}}
+
+टीम शुभम मोटर्स`,
+    metaBody: `नमस्ते {{1}} जी, शुभम मोटर्स जयपुर से Hero Festive 2026 ऑफर है। आपकी {{2}} पर {{3}}। ऑफर 8 से 20 अक्टूबर 2026 तक। बुकिंग कन्फर्म करने के लिए बुकिंग बटन दबाएँ।`,
+  },
 ];
 
 export function toHindiStep(row: HindiTemplate): SequenceStep {
@@ -133,10 +172,15 @@ export function applyHindiTemplateCatalog(store: StoreData) {
   const inquiry = templateByRole("inquiry");
   const booking = templateByRole("booking");
   const purchase = templateByRole("purchase");
+  const festive = templateByRole("festive");
 
   store.settings.inquiryTemplateId = inquiry?.templateId ?? LEAD_FOLLOWUP_TEMPLATE_ID;
   store.settings.bookingTemplateId = booking?.templateId ?? BOOKING_TEMPLATE_ID;
   store.settings.purchaseTemplateId = purchase?.templateId ?? BOUGHT_TEMPLATE_ID;
+  store.settings.festiveTemplateId =
+    store.settings.festiveTemplateId?.trim() ||
+    festive?.templateId ||
+    FESTIVE_TEMPLATE_ID;
   store.settings.templateLanguage = "hi";
   store.settings.showroomAddress = "शुभम मोटर्स, हीरो मोटोकॉर्प डीलर, जयपुर";
   store.inquirySequence = defaultInquirySequence();

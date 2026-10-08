@@ -39,6 +39,7 @@ export type Lead = {
   contactId: string | null;
   bookedAt: string | null;
   purchasedAt: string | null;
+  festiveOfferSentAt: string | null;
   createdAt: string;
   updatedAt: string;
   lastError: string | null;
@@ -72,6 +73,7 @@ export type Settings = {
   inquiryTemplateId: string;
   bookingTemplateId: string;
   purchaseTemplateId: string;
+  festiveTemplateId: string;
   templateLanguage: "hi" | "en";
   followupWindowStart: string;
   followupWindowEnd: string;

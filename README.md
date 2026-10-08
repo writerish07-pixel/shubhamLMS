@@ -50,13 +50,14 @@ This app is wired to:
 - Channel ID: `69ba3b443c58de2b169911a3`
 - WhatsApp: `+91 7240516000`
 
-Create these **3** Meta-approved **Hindi (hi) UTILITY** templates in BotSpace. Open **टेम्पलेट** in the desk and press **फॉलो-अप से सिंक करें**.
+Create these Meta-approved **Hindi (hi) UTILITY** templates in BotSpace. Open **टेम्पलेट** in the desk and press **फॉलो-अप से सिंक करें**. Auto follow-up still uses only the first **3**. The festive template is a one-shot blast; after BotSpace approval, change **only** the festive Template ID in Settings.
 
 | Template ID | When | Quick reply | Variables |
 |---|---|---|---|
 | `shubham_lead_followup` | First follow-up on a new lead | **बुकिंग** | `{{1}}` name, `{{2}}` model |
 | `shubham_booking_hi` | After the customer taps बुकिंग | **खरीद** (bought, after delivery) | `{{1}}` name, `{{2}}` model |
 | `shubham_bought_hi` | After delivery / खरीद | none — stops auto follow-up | `{{1}}` name, `{{2}}` model |
+| `shubham_festive_offer` | Hero Festive 2026 (8–20 Oct), send to leads | **बुकिंग** | `{{1}}` name, `{{2}}` model, `{{3}}` cash bonus / HDFC offer |
 
 **1. First follow-up**
 
@@ -75,6 +76,14 @@ Create these **3** Meta-approved **Hindi (hi) UTILITY** templates in BotSpace. O
 ```
 नमस्ते {{1}} जी, आपकी {{2}} खरीद शुभम मोटर्स जयपुर पर कन्फर्म है। डिलीवरी नोट हो गई है। ऑटो फॉलो-अप अब बंद है। धन्यवाद।
 ```
+
+**4. Festive offer** (does not replace follow-up / booking / bought)
+
+```
+नमस्ते {{1}} जी, शुभम मोटर्स जयपुर से Hero Festive 2026 ऑफर है। आपकी {{2}} पर {{3}}। ऑफर 8 से 20 अक्टूबर 2026 तक। बुकिंग कन्फर्म करने के लिए बुकिंग बटन दबाएँ।
+```
+
+`{{3}}` is the Hero cash bonus from the Festive 2026 circular **plus** HDFC 5% cashback (max ₹5,000). Models not in the PDF (Splendor, Passion, Glamour, Super Splendor, Xoom, Xpulse 200 4V, Other) still get HDFC 5% / max ₹5,000. Purchased leads are skipped. Send from **टेम्पलेट** or **Leads**.
 
 Until templates are approved, session text still works **inside** the 24-hour window, and `BOOKED` / `BOUGHT` / `PURCHASE` / बुकिंग / खरीद replies are treated as button taps.
 

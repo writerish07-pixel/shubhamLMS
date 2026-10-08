@@ -17,6 +17,7 @@ export async function GET() {
           store.settings.inquiryTemplateId,
           store.settings.bookingTemplateId,
           store.settings.purchaseTemplateId,
+          store.settings.festiveTemplateId,
           ...store.inquirySequence.map((step) => step.templateId),
           ...store.bookingSequence.map((step) => step.templateId),
           ...store.messages
@@ -41,6 +42,7 @@ export async function GET() {
       inquiry: snapshot.settings.inquiryTemplateId,
       booking: snapshot.settings.bookingTemplateId,
       purchase: snapshot.settings.purchaseTemplateId,
+      festive: snapshot.settings.festiveTemplateId,
     },
     sequences: {
       inquiry: snapshot.inquirySequence,
@@ -60,6 +62,7 @@ export async function POST() {
         inquiryTemplateId: store.settings.inquiryTemplateId,
         bookingTemplateId: store.settings.bookingTemplateId,
         purchaseTemplateId: store.settings.purchaseTemplateId,
+        festiveTemplateId: store.settings.festiveTemplateId,
         templateLanguage: store.settings.templateLanguage,
       },
       inquirySequence: store.inquirySequence,

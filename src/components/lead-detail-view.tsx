@@ -80,10 +80,11 @@ export function LeadDetailView({ id }: { id: string }) {
 
       <ReplyComposer leadId={lead.id} compact />
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <Meta label="Next WhatsApp" value={formatWhen(lead.nextFollowupAt)} />
         <Meta label="Booked at" value={formatWhen(lead.bookedAt)} />
         <Meta label="Purchased at" value={formatWhen(lead.purchasedAt)} />
+        <Meta label="Festive sent" value={formatWhen(lead.festiveOfferSentAt)} />
       </div>
 
       <LeadScheduleCard lead={lead} />
