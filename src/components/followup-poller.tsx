@@ -7,8 +7,8 @@ export function FollowupPoller() {
     const tick = () => {
       fetch("/api/followups/tick", { method: "POST" })
         .then((response) => response.json())
-        .then((data: { sent?: number }) => {
-          if (data.sent) {
+        .then((data: { sent?: number; festive?: { sent?: number } }) => {
+          if (data.sent || data.festive?.sent) {
             window.dispatchEvent(new Event("leads-updated"));
           }
         })

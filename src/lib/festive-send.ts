@@ -14,6 +14,22 @@ const FESTIVE_BODY =
   templateByRole("festive")?.sessionBody ??
   "नमस्ते {{firstName}} जी, शुभम मोटर्स जयपुर से Hero Festive 2026 ऑफर है। आपकी {{model}} पर {{cashBonus}}।";
 
+let festiveHoldUntil = 0;
+
+export function isTemplatePendingApproval(error?: string): boolean {
+  return /in review|not approved|132001|template does not exist|pending/i.test(
+    error || "",
+  );
+}
+
+export function festiveHoldActive(): boolean {
+  return Date.now() < festiveHoldUntil;
+}
+
+function holdFestiveForApproval() {
+  festiveHoldUntil = Date.now() + 8 * 60 * 1000;
+}
+
 export async function festiveOfferPreview() {
   return withStore((store) => {
     const eligible = store.leads.filter(festiveEligible);
@@ -100,16 +116,25 @@ export async function sendFestiveOfferBlast(limit = 25) {
 
   let sent = 0;
   let failed = 0;
+  let lastError: string | undefined;
 
   for (const leadId of dueIds) {
     const outcome = await withStore(async (store) => {
       const lead = store.leads.find((item) => item.id === leadId);
       if (!lead || !festiveEligible(lead)) return "skip" as const;
       const result = await deliverFestive(store, lead);
-      return result.ok ? ("sent" as const) : ("failed" as const);
+      return result;
     });
-    if (outcome === "sent") sent += 1;
-    if (outcome === "failed") failed += 1;
+    if (outcome === "skip") continue;
+    if (outcome.ok) sent += 1;
+    else {
+      failed += 1;
+      lastError = outcome.error;
+      if (isTemplatePendingApproval(outcome.error)) {
+        holdFestiveForApproval();
+        break;
+      }
+    }
     await new Promise((resolve) => setTimeout(resolve, 120));
   }
 
@@ -122,5 +147,36 @@ export async function sendFestiveOfferBlast(limit = 25) {
     sent,
     failed,
     remaining,
+    lastError,
+    waitingForApproval: Boolean(lastError && isTemplatePendingApproval(lastError)),
   };
+}
+
+export async function processDueFestiveOffers(limit = 8) {
+  if (!festiveOfferActive() || festiveHoldActive()) {
+    return {
+      processed: 0,
+      sent: 0,
+      failed: 0,
+      remaining: 0,
+      skipped: true as const,
+      waitingForApproval: festiveHoldActive(),
+    };
+  }
+
+  const enabled = await withStore(
+    (store) => store.settings.festiveAutoSend !== false && store.settings.liveWhatsApp,
+  );
+  if (!enabled) {
+    return {
+      processed: 0,
+      sent: 0,
+      failed: 0,
+      remaining: 0,
+      skipped: true as const,
+      waitingForApproval: false,
+    };
+  }
+
+  return sendFestiveOfferBlast(limit);
 }

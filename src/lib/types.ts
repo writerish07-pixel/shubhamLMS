@@ -74,6 +74,7 @@ export type Settings = {
   bookingTemplateId: string;
   purchaseTemplateId: string;
   festiveTemplateId: string;
+  festiveAutoSend: boolean;
   templateLanguage: "hi" | "en";
   followupWindowStart: string;
   followupWindowEnd: string;

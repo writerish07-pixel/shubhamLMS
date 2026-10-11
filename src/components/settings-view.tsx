@@ -116,6 +116,15 @@ export function SettingsView() {
             />
             Send live WhatsApp through BotSpace
           </label>
+          <label className="flex items-center gap-2 text-sm sm:col-span-2">
+            <Checkbox
+              checked={settings.festiveAutoSend !== false}
+              onCheckedChange={(value) =>
+                setSettings({ ...settings, festiveAutoSend: Boolean(value) })
+              }
+            />
+            Auto-send festive WhatsApp as soon as Meta approves the template
+          </label>
         </CardContent>
       </Card>
 

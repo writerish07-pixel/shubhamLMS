@@ -27,6 +27,7 @@ export const DEFAULT_SETTINGS: Settings = {
   bookingTemplateId: BOOKING_TEMPLATE_ID,
   purchaseTemplateId: BOUGHT_TEMPLATE_ID,
   festiveTemplateId: FESTIVE_TEMPLATE_ID,
+  festiveAutoSend: true,
   templateLanguage: "hi",
   followupWindowStart: "09:30",
   followupWindowEnd: "20:00",

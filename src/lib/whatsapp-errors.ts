@@ -57,6 +57,9 @@ export function explainWhatsAppError(error: string): string {
   if (/132000|number of param|parameter/.test(text)) {
     return `${error} — Follow-up templates use name then model ({{1}}, {{2}}). The festive template uses name, model, then offer ({{1}}, {{2}}, {{3}}).`;
   }
+  if (/in review/.test(text)) {
+    return `${error} — Festive template is still with Meta. WhatsApp will start automatically once it is approved.`;
+  }
   if (/132001|template does not exist|template not found|not approved/.test(text)) {
     return `${error} — Create Hindi UTILITY templates in BotSpace: shubham_lead_followup (बुकिंग), shubham_booking_hi (खरीद), shubham_bought_hi, shubham_festive_offer. Language hi. After festive approval, update only that Template ID in Settings.`;
   }

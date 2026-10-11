@@ -107,8 +107,9 @@ export function TemplatesView() {
           <h1 className="font-heading text-3xl tracking-wide">हिंदी टेम्पलेट</h1>
           <p className="mt-1 max-w-2xl text-muted-foreground">
             ऑटो फॉलो-अप के <strong>3 हिंदी UTILITY</strong> टेम्पलेट वैसे ही हैं।
-            चौथा <strong>फेस्टिव ऑफर</strong> अलग है — BotSpace में Approve होने के
-            बाद सिर्फ Template ID Settings में बदलें।
+            चौथा <strong>फेस्टिव ऑफर</strong> Meta Approve होते ही अपने आप लीड्स
+            पर भेज दिया जाएगा। BotSpace में ID अलग हो तो Settings में सिर्फ वही
+            बदलें।
           </p>
         </div>
         <div className="flex flex-wrap gap-2">

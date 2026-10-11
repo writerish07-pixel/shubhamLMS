@@ -1,6 +1,7 @@
 import { buttonHint, interpolate } from "@/lib/copy";
 import { PURCHASE_THANKS_BODY } from "@/lib/defaults";
 import { sendLeadWhatsApp } from "@/lib/botspace";
+import { processDueFestiveOffers } from "@/lib/festive-send";
 import { computeFollowupAt } from "@/lib/schedule";
 import {
   activeSequence,
@@ -157,7 +158,8 @@ export async function processDueFollowups(limit = 20) {
     await new Promise((resolve) => setTimeout(resolve, 120));
   }
 
-  return { processed: dueIds.length, sent, failed };
+  const festive = await processDueFestiveOffers(Math.min(8, limit));
+  return { processed: dueIds.length, sent, failed, festive };
 }
 
 export async function sendNow(leadId: string) {
