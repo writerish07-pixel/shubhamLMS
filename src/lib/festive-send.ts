@@ -5,7 +5,12 @@ import {
   festiveOfferActive,
   festiveOfferLine,
 } from "@/lib/festive-offer";
-import { FESTIVE_TEMPLATE_ID, templateByRole } from "@/lib/hindi-templates";
+import {
+  FESTIVE_TEMPLATE_ID,
+  templateBodyVariables,
+  templateById,
+  templateByRole,
+} from "@/lib/hindi-templates";
 import { appendMessage, touchLead, withStore } from "@/lib/store";
 import { isOpenSessionWindow } from "@/lib/whatsapp-errors";
 import type { Lead, StoreData } from "@/lib/types";
@@ -55,8 +60,8 @@ async function deliverFestive(store: StoreData, lead: Lead) {
   const settings = store.settings;
   const templateId = settings.festiveTemplateId?.trim() || FESTIVE_TEMPLATE_ID;
   const offer = festiveOfferLine(lead.model);
-  const firstName = lead.name.trim().split(/\s+/)[0] || lead.name.trim();
-  const body = interpolate(FESTIVE_BODY, lead, settings, { cashBonus: offer, offer });
+  const copy = templateById(templateId)?.sessionBody ?? FESTIVE_BODY;
+  const body = interpolate(copy, lead, settings, { cashBonus: offer, offer });
 
   const result = await sendLeadWhatsApp(settings, {
     name: lead.name,
@@ -66,7 +71,7 @@ async function deliverFestive(store: StoreData, lead: Lead) {
     templateId,
     preferTemplate: true,
     sessionWindowOpen: isOpenSessionWindow(lead.lastInboundAt),
-    variables: [firstName, lead.model, offer],
+    variables: templateBodyVariables(templateId, lead.name, lead.model),
   });
 
   appendMessage(store, {

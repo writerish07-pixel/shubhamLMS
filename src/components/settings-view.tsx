@@ -67,8 +67,8 @@ export function SettingsView() {
           <h1 className="font-heading text-3xl tracking-wide">BotSpace</h1>
           <p className="mt-1 max-w-2xl text-muted-foreground">
             Connected to Shubham Motors channel {settings.channelId}. हिंदी
-            टेम्पलेट 3 फॉलो-अप + 1 फेस्टिव हैं। Approve के बाद सिर्फ festive
-            Template ID यहीं बदलें। IDs{" "}
+            टेम्पलेट 3 फॉलो-अप + <code>herofestiveoffer</code> मार्केटिंग हैं।
+            IDs{" "}
             <a className="underline" href="/templates">
               टेम्पलेट
             </a>{" "}
@@ -155,18 +155,16 @@ export function SettingsView() {
             }
           />
           <Field
-            label="4. फेस्टिव ऑफर (Approve के बाद यही ID बदलें)"
+            label="4. फेस्टिव मार्केटिंग (herofestiveoffer)"
             value={settings.festiveTemplateId ?? ""}
             onChange={(festiveTemplateId) =>
               setSettings({ ...settings, festiveTemplateId })
             }
           />
           <p className="text-sm text-muted-foreground sm:col-span-2">
-            फॉलो-अप 3 टेम्पलेट वैसे ही रहते हैं। फेस्टिव{" "}
-            <code>{settings.festiveTemplateId}</code> लीड्स को एक बार भेजने के
-            लिए है (खरीदी लीड छोड़कर)। वेरिएबल: नाम, मॉडल, फिर कैश बोनस / HDFC
-            5% (अधिकतम ₹5,000)। BotSpace में Approve होने के बाद सिर्फ यह ID
-            अपडेट करें।
+            डिफ़ॉल्ट फेस्टिव ID <code>herofestiveoffer</code> (MARKETING, कोई
+            वेरिएबल नहीं, Call बटन)। रजिस्टर या Import से कोई भी टेम्पलेट चुनी
+            लीड्स पर भेजा जा सकता है। खरीद होने तक फॉलो-अप चलता रहता है।
           </p>
         </CardContent>
       </Card>

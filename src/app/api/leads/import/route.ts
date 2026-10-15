@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { parseLeadCsv } from "@/lib/csv";
 import { processDueFollowups } from "@/lib/followup";
 import { createLeads } from "@/lib/leads";
+import {
+  isInquiryFollowupTemplate,
+  sendChosenTemplateBlast,
+} from "@/lib/send-template";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -10,6 +14,7 @@ export async function POST(request: Request) {
   const form = await request.formData();
   const file = form.get("file");
   const startFollowup = form.get("startFollowup") !== "false";
+  const templateId = String(form.get("templateId") || "").trim();
 
   if (!(file instanceof File)) {
     return NextResponse.json({ error: "CSV file is required." }, { status: 400 });
@@ -40,6 +45,19 @@ export async function POST(request: Request) {
     })),
   );
 
+  let campaign:
+    | Awaited<ReturnType<typeof sendChosenTemplateBlast>>
+    | undefined;
+  const shouldSendNow =
+    Boolean(templateId) &&
+    !(startFollowup && isInquiryFollowupTemplate(templateId));
+  if (shouldSendNow && result.created.length) {
+    campaign = await sendChosenTemplateBlast(
+      result.created.map((lead) => lead.id),
+      templateId,
+    );
+  }
+
   if (startFollowup && result.created.length) {
     void processDueFollowups(25);
   }
@@ -49,5 +67,6 @@ export async function POST(request: Request) {
     skipped: result.skipped,
     invalid: parsed.rows.filter((row) => row.error),
     leads: result.created,
+    campaign,
   });
 }

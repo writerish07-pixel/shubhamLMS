@@ -35,19 +35,49 @@ function scheduleStep(
   }).toISOString();
 }
 
+const REPEAT_UNTIL_PURCHASE_MINUTES = 1440;
+
+function keepFollowing(lead: Lead) {
+  lead.autoFollowup = true;
+  if (lead.status === "purchased" || lead.status === "paused") return;
+  lead.status = lead.stage === "booking" ? "booked" : "following";
+}
+
 function scheduleAfterSend(lead: Lead, store: StoreData, justSentIndex: number) {
   const steps = activeSequence(store, lead.stage === "sold" ? "inquiry" : lead.stage);
-  const upcoming = nextEnabledStep(steps, justSentIndex + 1);
+  let upcoming = nextEnabledStep(steps, justSentIndex + 1);
+  let looping = false;
   if (upcoming === -1) {
-    lead.nextStepIndex = steps.length;
-    lead.nextFollowupAt = null;
-    if (lead.status === "following" || lead.status === "booked") {
-      lead.status = "exhausted";
-    }
+    upcoming = nextEnabledStep(steps, 0);
+    looping = true;
+  }
+  keepFollowing(lead);
+  if (upcoming === -1) {
+    lead.nextStepIndex = 0;
+    lead.nextFollowupAt = computeFollowupAt({
+      from: new Date(),
+      delayMinutes: REPEAT_UNTIL_PURCHASE_MINUTES,
+      sendAtTime: null,
+      windowStart: store.settings.followupWindowStart || "09:30",
+      windowEnd: store.settings.followupWindowEnd || "20:00",
+      respectWindow: true,
+    }).toISOString();
     return;
   }
   lead.nextStepIndex = upcoming;
-  scheduleStep(lead, store.settings, steps[upcoming], new Date(), {
+  const step = steps[upcoming];
+  if (looping && step.delayMinutes <= 0 && !step.sendAtTime) {
+    lead.nextFollowupAt = computeFollowupAt({
+      from: new Date(),
+      delayMinutes: REPEAT_UNTIL_PURCHASE_MINUTES,
+      sendAtTime: null,
+      windowStart: store.settings.followupWindowStart || "09:30",
+      windowEnd: store.settings.followupWindowEnd || "20:00",
+      respectWindow: true,
+    }).toISOString();
+    return;
+  }
+  scheduleStep(lead, store.settings, step, new Date(), {
     respectWindow: true,
   });
 }
@@ -135,12 +165,25 @@ export async function processDueFollowups(limit = 20) {
       }
 
       const steps = activeSequence(store, lead.stage);
-      const step = steps[lead.nextStepIndex];
+      let step = steps[lead.nextStepIndex];
       if (!step) {
-        lead.nextFollowupAt = null;
-        lead.status = "exhausted";
-        touchLead(lead);
-        return "skip" as const;
+        const first = nextEnabledStep(steps, 0);
+        if (first === -1) {
+          keepFollowing(lead);
+          lead.nextStepIndex = 0;
+          lead.nextFollowupAt = computeFollowupAt({
+            from: new Date(),
+            delayMinutes: REPEAT_UNTIL_PURCHASE_MINUTES,
+            sendAtTime: null,
+            windowStart: store.settings.followupWindowStart || "09:30",
+            windowEnd: store.settings.followupWindowEnd || "20:00",
+            respectWindow: true,
+          }).toISOString();
+          touchLead(lead);
+          return "skip" as const;
+        }
+        lead.nextStepIndex = first;
+        step = steps[first];
       }
 
       lead.nextFollowupAt = null;
@@ -337,6 +380,36 @@ export async function setLeadSchedule(leadId: string, nextFollowupAt: string | n
     touchLead(lead);
     return lead;
   });
+}
+
+export function resumeFollowupUntilPurchased(store: StoreData) {
+  for (const lead of store.leads) {
+    if (lead.status === "purchased" || lead.status === "paused") continue;
+    const stuck =
+      lead.status === "exhausted" ||
+      (lead.autoFollowup && !lead.nextFollowupAt);
+    if (!stuck && lead.autoFollowup) continue;
+    keepFollowing(lead);
+    const steps = activeSequence(store, lead.stage);
+    const index = steps[lead.nextStepIndex] ? lead.nextStepIndex : 0;
+    lead.nextStepIndex = index;
+    const step = steps[index];
+    if (step) {
+      const delayMinutes =
+        step.delayMinutes > 0 ? step.delayMinutes : REPEAT_UNTIL_PURCHASE_MINUTES;
+      lead.nextFollowupAt = computeFollowupAt({
+        from: new Date(),
+        delayMinutes,
+        sendAtTime: step.sendAtTime,
+        windowStart: store.settings.followupWindowStart || "09:30",
+        windowEnd: store.settings.followupWindowEnd || "20:00",
+        respectWindow: true,
+      }).toISOString();
+    } else {
+      lead.nextFollowupAt = new Date(Date.now() + REPEAT_UNTIL_PURCHASE_MINUTES * 60 * 1000).toISOString();
+    }
+    touchLead(lead);
+  }
 }
 
 export function rescheduleWaitingLeads(store: StoreData) {

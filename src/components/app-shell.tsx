@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils";
 const NAV = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/inbox", label: "इनबॉक्स", icon: Inbox },
-  { href: "/leads", label: "Leads", icon: Users },
+  { href: "/leads", label: "रजिस्टर", icon: Users },
   { href: "/import", label: "Import", icon: Upload },
   { href: "/sequence", label: "Follow-up", icon: MessageSquare },
   { href: "/templates", label: "टेम्पलेट", icon: FileText },

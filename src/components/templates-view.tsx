@@ -33,14 +33,15 @@ function botspaceStatus(row?: HarvestedTemplate) {
   return "सिंक बाकी";
 }
 
-function roleLabel(role: HindiTemplate["role"]) {
-  if (role === "inquiry") return "पहला फॉलो-अप";
-  if (role === "booking") return "बुकिंग";
-  if (role === "purchase") return "खरीद";
-  return "फेस्टिव ऑफर";
+function roleLabel(row: HindiTemplate) {
+  if (row.role === "inquiry") return "पहला फॉलो-अप";
+  if (row.role === "booking") return "बुकिंग";
+  if (row.role === "purchase") return "खरीद";
+  return row.category === "MARKETING" ? "फेस्टिव मार्केटिंग" : "फेस्टिव ऑफर";
 }
 
 function variableHint(row: HindiTemplate) {
+  if (row.variableCount <= 0) return "वेरिएबल नहीं — पूरा मैसेज फिक्स्ड है";
   if (row.variableCount >= 3) {
     return `वेरिएबल: {{1}} = नाम, {{2}} = मॉडल, {{3}} = कैश बोनस / HDFC ऑफर`;
   }
@@ -174,11 +175,13 @@ export function TemplatesView() {
             <br />
             3) खरीद / डिलीवरी — <code>shubham_bought_hi</code> · ऑटो फॉलो-अप बंद
             <br />
-            4) फेस्टिव ऑफर — <code>{data.mapped.festive}</code> · बटन{" "}
-            <strong>बुकिंग</strong> · एक बार लीड्स को भेजें (फॉलो-अप नहीं बदलता)
+            4) फेस्टिव मार्केटिंग — <code>herofestiveoffer</code> · Call बटन ·
+            कोई वेरिएबल नहीं
             <br />
-            फॉलो-अप वेरिएबल: {"{{1}}"} नाम, {"{{2}}"} मॉडल। फेस्टिव: {"{{3}}"} कैश
-            बोनस / HDFC ऑफर।
+            5) फेस्टिव UTILITY — <code>shubham_festive_offer</code> · बटन{" "}
+            <strong>बुकिंग</strong>
+            <br />
+            अभी मैप फेस्टिव: <code>{data.mapped.festive}</code>
           </div>
           <p>
             अभी मैप: पूछताछ <code>{data.mapped.inquiry}</code> · बुकिंग{" "}
@@ -282,7 +285,7 @@ export function TemplatesView() {
                   </td>
                   <td className="py-2 pr-3">hi</td>
                   <td className="py-2 pr-3">
-                    {row.category} · {roleLabel(row.role)}
+                    {row.category} · {roleLabel(row)}
                   </td>
                   <td className="py-2 pr-3">
                     {botspaceStatus(
@@ -305,7 +308,7 @@ export function TemplatesView() {
                 <CardTitle>{row.nameHi}</CardTitle>
                 <p className="mt-1 text-xs text-muted-foreground">
                   Template ID: <code>{row.templateId}</code> · भाषा hi ·{" "}
-                  {row.category} · {roleLabel(row.role)}
+                  {row.category} · {roleLabel(row)}
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">

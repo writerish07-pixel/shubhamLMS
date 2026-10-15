@@ -55,13 +55,13 @@ export function sendStatusFailed(status: unknown): boolean {
 export function explainWhatsAppError(error: string): string {
   const text = error.toLowerCase();
   if (/132000|number of param|parameter/.test(text)) {
-    return `${error} — Follow-up templates use name then model ({{1}}, {{2}}). The festive template uses name, model, then offer ({{1}}, {{2}}, {{3}}).`;
+    return `${error} — Follow-up templates use name then model ({{1}}, {{2}}). herofestiveoffer has no variables. shubham_festive_offer uses name, model, then offer.`;
   }
   if (/in review/.test(text)) {
     return `${error} — Festive template is still with Meta. WhatsApp will start automatically once it is approved.`;
   }
   if (/132001|template does not exist|template not found|not approved/.test(text)) {
-    return `${error} — Create Hindi UTILITY templates in BotSpace: shubham_lead_followup (बुकिंग), shubham_booking_hi (खरीद), shubham_bought_hi, shubham_festive_offer. Language hi. After festive approval, update only that Template ID in Settings.`;
+    return `${error} — Hindi templates: shubham_lead_followup, shubham_booking_hi, shubham_bought_hi, herofestiveoffer (marketing), shubham_festive_offer. After festive approval, update the festive Template ID in Settings.`;
   }
   if (/131047|24 hour|re-engagement|session window/.test(text)) {
     return `${error} — Free-form WhatsApp only works for 24 hours after the customer messages. New leads need an approved template.`;

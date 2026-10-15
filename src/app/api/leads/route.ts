@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { createLeads } from "@/lib/leads";
 import { processDueFollowups } from "@/lib/followup";
 import { normalizeIndianPhone } from "@/lib/phones";
+import {
+  isInquiryFollowupTemplate,
+  sendChosenTemplateToLead,
+} from "@/lib/send-template";
 import { readStore } from "@/lib/store";
 
 export const runtime = "nodejs";
@@ -20,6 +24,7 @@ export async function POST(request: Request) {
     model?: string;
     notes?: string;
     startFollowup?: boolean;
+    templateId?: string;
   };
 
   const name = body.name?.trim();
@@ -51,9 +56,19 @@ export async function POST(request: Request) {
     );
   }
 
+  const templateId = body.templateId?.trim() || "";
+  const created = result.created[0];
+  if (
+    created &&
+    templateId &&
+    !(body.startFollowup !== false && isInquiryFollowupTemplate(templateId))
+  ) {
+    await sendChosenTemplateToLead(created.id, templateId);
+  }
+
   if (body.startFollowup !== false) {
     void processDueFollowups(5);
   }
 
-  return NextResponse.json({ lead: result.created[0], skipped: result.skipped });
+  return NextResponse.json({ lead: created, skipped: result.skipped });
 }

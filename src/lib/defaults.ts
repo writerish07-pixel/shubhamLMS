@@ -9,7 +9,7 @@ import {
 } from "@/lib/hindi-templates";
 import type { SequenceStep, Settings } from "@/lib/types";
 
-export const STORE_VERSION = 7;
+export const STORE_VERSION = 8;
 
 export const DEFAULT_SETTINGS: Settings = {
   apiKey:

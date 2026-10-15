@@ -67,6 +67,16 @@ async function loadFromDisk(): Promise<StoreData> {
     };
     if (version < STORE_VERSION) {
       applyHindiTemplateCatalog(data);
+      for (const lead of data.leads) {
+        if (lead.status === "purchased" || lead.status === "paused") continue;
+        if (lead.status === "exhausted") {
+          lead.status = lead.stage === "booking" ? "booked" : "following";
+          lead.autoFollowup = true;
+        }
+        if (lead.autoFollowup && !lead.nextFollowupAt) {
+          lead.nextFollowupAt = new Date(Date.now() + 60 * 1000).toISOString();
+        }
+      }
     }
     return data;
   } catch {

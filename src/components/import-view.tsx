@@ -13,13 +13,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { TemplateSelect } from "@/components/template-picker";
 import { parseLeadCsv, type ParsedLeadRow } from "@/lib/csv";
 import { downloadLeadTemplate } from "@/lib/download-template";
+import { LEAD_FOLLOWUP_TEMPLATE_ID } from "@/lib/hindi-templates";
 
 export function ImportView() {
   const [rows, setRows] = useState<ParsedLeadRow[]>([]);
   const [fileName, setFileName] = useState<string | null>(null);
   const [startFollowup, setStartFollowup] = useState(true);
+  const [templateId, setTemplateId] = useState(LEAD_FOLLOWUP_TEMPLATE_ID);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<string | null>(null);
 
@@ -59,6 +62,7 @@ export function ImportView() {
       const form = new FormData();
       form.set("file", blob, fileName);
       form.set("startFollowup", startFollowup ? "true" : "false");
+      form.set("templateId", templateId);
       const response = await fetch("/api/leads/import", {
         method: "POST",
         body: form,
@@ -66,9 +70,16 @@ export function ImportView() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Import failed");
       const skipped = data.skipped?.length ?? 0;
+      const campaign = data.campaign as
+        | { sent?: number; failed?: number }
+        | undefined;
       setResult(
         `Imported ${data.created} lead${data.created === 1 ? "" : "s"}${
           skipped ? `, skipped ${skipped} duplicate number${skipped === 1 ? "" : "s"}` : ""
+        }${
+          campaign
+            ? `. WhatsApp: ${campaign.sent ?? 0} sent, ${campaign.failed ?? 0} failed`
+            : ""
         }.`,
       );
       toast.success("Leads imported");
@@ -85,9 +96,9 @@ export function ImportView() {
       <div>
         <h1 className="font-heading text-3xl tracking-wide">Bulk lead upload</h1>
         <p className="mt-1 max-w-2xl text-muted-foreground">
-          Use the template with customer name, mobile number and the Hero model
-          they inquired for. Duplicate numbers are skipped. Auto WhatsApp starts
-          as soon as the file is accepted.
+          CSV में नाम, मोबाइल और मॉडल डालें। अपलोड करते समय बताएँ कि इन लीड्स
+          पर कौन सा WhatsApp टेम्पलेट भेजा जाए। खरीद दर्ज होने तक ऑटो फॉलो-अप
+          चलता रहता है। Duplicate नंबर skip होते हैं।
         </p>
       </div>
 
@@ -137,12 +148,24 @@ Amit Singh,9988776655,HF Deluxe`}
                 }}
               />
             </label>
+            <div className="grid gap-1.5">
+              <span className="text-sm font-medium">इन लीड्स पर टेम्पलेट</span>
+              <TemplateSelect
+                id="importTemplate"
+                value={templateId}
+                onChange={setTemplateId}
+                includeNone
+              />
+              <p className="text-xs text-muted-foreground">
+                फेस्टिव मार्केटिंग ID: <code>herofestiveoffer</code>
+              </p>
+            </div>
             <label className="flex items-center gap-2 text-sm">
               <Checkbox
                 checked={startFollowup}
                 onCheckedChange={(value) => setStartFollowup(Boolean(value))}
               />
-              Start auto WhatsApp follow-up immediately
+              खरीद तक ऑटो फॉलो-अप जारी रखें
             </label>
             <Button onClick={importRows} disabled={busy || validCount === 0}>
               {busy ? "Importing…" : `Import ${validCount || ""} leads`}
