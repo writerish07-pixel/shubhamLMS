@@ -39,6 +39,7 @@ export type Lead = {
   contactId: string | null;
   bookedAt: string | null;
   purchasedAt: string | null;
+  festiveOfferSentAt: string | null;
   createdAt: string;
   updatedAt: string;
   lastError: string | null;
@@ -72,9 +73,22 @@ export type Settings = {
   inquiryTemplateId: string;
   bookingTemplateId: string;
   purchaseTemplateId: string;
+  festiveTemplateId: string;
+  festiveAutoSend: boolean;
   templateLanguage: "hi" | "en";
   followupWindowStart: string;
   followupWindowEnd: string;
+};
+
+export type CachedBotspaceTemplate = {
+  templateId: string;
+  language?: string;
+  body?: string;
+  buttons?: string[];
+  sourceMessageId?: string;
+  deliveryStatus?: string;
+  failedReason?: string;
+  checkedAt: string;
 };
 
 export type StoreData = {
@@ -84,4 +98,5 @@ export type StoreData = {
   bookingSequence: SequenceStep[];
   leads: Lead[];
   messages: MessageLog[];
+  botspaceTemplates?: CachedBotspaceTemplate[];
 };

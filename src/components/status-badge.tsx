@@ -6,7 +6,7 @@ const LABELS: Record<LeadStatus, string> = {
   booked: "Booked",
   purchased: "Purchased",
   paused: "Paused",
-  exhausted: "Sequence done",
+  exhausted: "Waiting next follow-up",
   failed: "Send failed",
 };
 

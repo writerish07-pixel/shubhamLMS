@@ -25,6 +25,7 @@ function bumpFollowup(lead: Lead) {
 export function ensureLeadShape(lead: Lead): Lead {
   if (typeof lead.unreadCount !== "number") lead.unreadCount = 0;
   if (lead.lastReadAt === undefined) lead.lastReadAt = null;
+  if (lead.festiveOfferSentAt === undefined) lead.festiveOfferSentAt = null;
   return lead;
 }
 
@@ -51,6 +52,7 @@ export function createInboundLead(
     contactId: null,
     bookedAt: null,
     purchasedAt: null,
+    festiveOfferSentAt: null,
     createdAt: now,
     updatedAt: now,
     lastError: null,

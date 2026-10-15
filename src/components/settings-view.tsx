@@ -67,7 +67,8 @@ export function SettingsView() {
           <h1 className="font-heading text-3xl tracking-wide">BotSpace</h1>
           <p className="mt-1 max-w-2xl text-muted-foreground">
             Connected to Shubham Motors channel {settings.channelId}. हिंदी
-            टेम्पलेट सिर्फ 3 हैं — फॉलो-अप, बुकिंग, खरीद। IDs{" "}
+            टेम्पलेट 3 फॉलो-अप + <code>herofestiveoffer</code> मार्केटिंग हैं।
+            IDs{" "}
             <a className="underline" href="/templates">
               टेम्पलेट
             </a>{" "}
@@ -115,6 +116,15 @@ export function SettingsView() {
             />
             Send live WhatsApp through BotSpace
           </label>
+          <label className="flex items-center gap-2 text-sm sm:col-span-2">
+            <Checkbox
+              checked={settings.festiveAutoSend !== false}
+              onCheckedChange={(value) =>
+                setSettings({ ...settings, festiveAutoSend: Boolean(value) })
+              }
+            />
+            Auto-send festive WhatsApp as soon as Meta approves the template
+          </label>
         </CardContent>
       </Card>
 
@@ -122,7 +132,7 @@ export function SettingsView() {
         <CardHeader>
           <CardTitle>Approved template IDs</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-3 sm:grid-cols-3">
+        <CardContent className="grid gap-3 sm:grid-cols-2">
           <Field
             label="1. फॉलो-अप · बुकिंग"
             value={settings.inquiryTemplateId}
@@ -144,12 +154,17 @@ export function SettingsView() {
               setSettings({ ...settings, purchaseTemplateId })
             }
           />
-          <p className="text-sm text-muted-foreground sm:col-span-3">
-            सिर्फ 3 हिंदी UTILITY टेम्पलेट: 1) फॉलो-अप{" "}
-            <code>{settings.inquiryTemplateId}</code> (बुकिंग बटन), 2) बुकिंग{" "}
-            <code>{settings.bookingTemplateId}</code> (डिलीवरी पर खरीद बटन), 3)
-            खरीद <code>{settings.purchaseTemplateId}</code>। वेरिएबल: नाम फिर
-            मॉडल। BotSpace में बनाकर Approve होने के बाद लाइव भेजें।
+          <Field
+            label="4. फेस्टिव मार्केटिंग (herofestiveoffer)"
+            value={settings.festiveTemplateId ?? ""}
+            onChange={(festiveTemplateId) =>
+              setSettings({ ...settings, festiveTemplateId })
+            }
+          />
+          <p className="text-sm text-muted-foreground sm:col-span-2">
+            डिफ़ॉल्ट फेस्टिव ID <code>herofestiveoffer</code> (MARKETING, कोई
+            वेरिएबल नहीं, Call बटन)। रजिस्टर या Import से कोई भी टेम्पलेट चुनी
+            लीड्स पर भेजा जा सकता है। खरीद होने तक फॉलो-अप चलता रहता है।
           </p>
         </CardContent>
       </Card>

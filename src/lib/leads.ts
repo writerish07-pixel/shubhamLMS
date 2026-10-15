@@ -47,6 +47,7 @@ export async function createLeads(
         contactId: null,
         bookedAt: null,
         purchasedAt: null,
+        festiveOfferSentAt: null,
         createdAt: now,
         updatedAt: now,
         lastError: null,

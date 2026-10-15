@@ -31,6 +31,7 @@ function emptyStore(): StoreData {
     bookingSequence: structuredClone(DEFAULT_BOOKING_SEQUENCE),
     leads: [],
     messages: [],
+    botspaceTemplates: [],
   };
 }
 
@@ -59,11 +60,23 @@ async function loadFromDisk(): Promise<StoreData> {
         ...lead,
         unreadCount: lead.unreadCount ?? 0,
         lastReadAt: lead.lastReadAt ?? null,
+        festiveOfferSentAt: lead.festiveOfferSentAt ?? null,
       })),
       messages: parsed.messages ?? [],
+      botspaceTemplates: parsed.botspaceTemplates ?? [],
     };
     if (version < STORE_VERSION) {
       applyHindiTemplateCatalog(data);
+      for (const lead of data.leads) {
+        if (lead.status === "purchased" || lead.status === "paused") continue;
+        if (lead.status === "exhausted") {
+          lead.status = lead.stage === "booking" ? "booked" : "following";
+          lead.autoFollowup = true;
+        }
+        if (lead.autoFollowup && !lead.nextFollowupAt) {
+          lead.nextFollowupAt = new Date(Date.now() + 60 * 1000).toISOString();
+        }
+      }
     }
     return data;
   } catch {
