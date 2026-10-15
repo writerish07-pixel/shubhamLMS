@@ -22,6 +22,13 @@ export function isTemplatePendingApproval(error?: string): boolean {
   );
 }
 
+export function shouldHoldFestive(error?: string): boolean {
+  return (
+    isTemplatePendingApproval(error) ||
+    /131049|healthy ecosystem/i.test(error || "")
+  );
+}
+
 export function festiveHoldActive(): boolean {
   return Date.now() < festiveHoldUntil;
 }
@@ -130,7 +137,7 @@ export async function sendFestiveOfferBlast(limit = 25) {
     else {
       failed += 1;
       lastError = outcome.error;
-      if (isTemplatePendingApproval(outcome.error)) {
+      if (shouldHoldFestive(outcome.error)) {
         holdFestiveForApproval();
         break;
       }
@@ -148,7 +155,7 @@ export async function sendFestiveOfferBlast(limit = 25) {
     failed,
     remaining,
     lastError,
-    waitingForApproval: Boolean(lastError && isTemplatePendingApproval(lastError)),
+    waitingForApproval: Boolean(lastError && shouldHoldFestive(lastError)),
   };
 }
 

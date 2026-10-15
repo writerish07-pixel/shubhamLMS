@@ -27,6 +27,12 @@ type Payload = {
   };
 };
 
+function botspaceStatus(row?: HarvestedTemplate) {
+  if (row?.body) return "BotSpace पर है";
+  if (row?.failedReason) return "BotSpace पर नहीं मिला";
+  return "सिंक बाकी";
+}
+
 function roleLabel(role: HindiTemplate["role"]) {
   if (role === "inquiry") return "पहला फॉलो-अप";
   if (role === "booking") return "बुकिंग";
@@ -84,7 +90,7 @@ export function TemplatesView() {
     try {
       const response = await fetch("/api/templates", { method: "POST" });
       if (!response.ok) throw new Error("Sync failed");
-      toast.success("हिंदी टेम्पलेट फॉलो-अप से जुड़ गए");
+      toast.success("BotSpace टेम्पलेट सिंक हो गए");
       load();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Sync failed");
@@ -144,7 +150,7 @@ export function TemplatesView() {
               : `फेस्टिव भेजें (${festive?.eligibleCount ?? 0})`}
           </Button>
           <Button onClick={apply} disabled={syncing}>
-            {syncing ? "जोड़ रहे हैं…" : "फॉलो-अप से सिंक करें"}
+            {syncing ? "जोड़ रहे हैं…" : "BotSpace से सिंक करें"}
           </Button>
         </div>
       </div>
@@ -156,7 +162,7 @@ export function TemplatesView() {
         <CardContent className="space-y-3 text-sm text-muted-foreground">
           <p>
             {data.remote.listed
-              ? "Remote templates loaded."
+              ? `BotSpace से ${harvested.filter((row) => row.body).length} टेम्पलेट मिले (Approve होने के बाद यहीं दिखते हैं)।`
               : data.remote.error}
           </p>
           <div className="rounded-lg border border-[#c8102e]/30 bg-[#c8102e]/5 px-3 py-2 text-foreground">
@@ -193,30 +199,51 @@ export function TemplatesView() {
           {harvested.length > 0 ? (
             <div className="space-y-2">
               <p className="text-foreground">
-                भेजे गए मैसेज से मिले टेम्पलेट ({harvested.length})
+                BotSpace टेम्पलेट ({harvested.filter((row) => row.body).length}/
+                {harvested.length})
               </p>
               {harvested.map((row) => (
                 <div
                   key={`${row.templateId}-${row.language ?? "na"}`}
                   className="rounded-lg border border-border bg-muted/40 px-3 py-2"
                 >
-                  <code className="text-foreground">{row.templateId}</code>
-                  {row.language ? ` · ${row.language}` : ""}
-                  {hindiIds.has(row.templateId) ? " · हिंदी कैटलॉग से मैच" : ""}
-                  {row.buttons?.length ? ` · बटन: ${row.buttons.join(", ")}` : ""}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <code className="text-foreground">{row.templateId}</code>
+                    <Badge variant={row.body ? "default" : "secondary"}>
+                      {botspaceStatus(row)}
+                    </Badge>
+                    {row.language ? (
+                      <span className="text-xs">{row.language}</span>
+                    ) : null}
+                    {hindiIds.has(row.templateId) ? (
+                      <span className="text-xs">· हिंदी कैटलॉग से मैच</span>
+                    ) : null}
+                    {row.buttons?.length ? (
+                      <span className="text-xs">
+                        · बटन: {row.buttons.join(", ")}
+                      </span>
+                    ) : null}
+                  </div>
                   {row.body ? (
-                    <p className="mt-1 whitespace-pre-wrap text-xs">{row.body}</p>
-                  ) : null}
+                    <p className="mt-1 whitespace-pre-wrap text-xs text-foreground">
+                      {row.body}
+                    </p>
+                  ) : (
+                    <p className="mt-1 text-xs">
+                      {row.failedReason || "BotSpace से बॉडी नहीं मिली"}
+                    </p>
+                  )}
                 </div>
               ))}
             </div>
           ) : (
             <p>
-              अभी BotSpace इनबॉक्स से कोई पुराना टेम्पलेट ID नहीं मिला
+              BotSpace से अभी कोई टेम्पलेट नहीं खिंचा। ऊपर{" "}
+              <strong>BotSpace से सिंक करें</strong> दबाएँ
               {data.remote.harvestedFromMessages
-                ? ` (${data.remote.harvestedFromMessages} मैसेज जाँचे)`
+                ? ` (${data.remote.harvestedFromMessages} पुराने मैसेज जाँचे)`
                 : ""}
-              । नीचे हिंदी कैटलॉग वही IDs हैं जो डेस्क भेजेगा।
+              ।
             </p>
           )}
         </CardContent>
@@ -233,6 +260,7 @@ export function TemplatesView() {
                 <th className="pb-2 pr-3">Template ID</th>
                 <th className="pb-2 pr-3">भाषा</th>
                 <th className="pb-2 pr-3">कैटेगरी</th>
+                <th className="pb-2 pr-3">BotSpace</th>
                 <th className="pb-2">क्विक रिप्लाई</th>
               </tr>
             </thead>
@@ -256,6 +284,11 @@ export function TemplatesView() {
                   <td className="py-2 pr-3">
                     {row.category} · {roleLabel(row.role)}
                   </td>
+                  <td className="py-2 pr-3">
+                    {botspaceStatus(
+                      harvested.find((item) => item.templateId === row.templateId),
+                    )}
+                  </td>
                   <td className="py-2">{row.buttonLabel ?? "—"}</td>
                 </tr>
               ))}
@@ -275,12 +308,24 @@ export function TemplatesView() {
                   {row.category} · {roleLabel(row.role)}
                 </p>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 {row.buttonLabel ? (
                   <Badge>{row.buttonLabel}</Badge>
                 ) : (
                   <Badge variant="secondary">कोई बटन नहीं</Badge>
                 )}
+                <Badge
+                  variant={
+                    harvested.find((item) => item.templateId === row.templateId)
+                      ?.body
+                      ? "default"
+                      : "secondary"
+                  }
+                >
+                  {botspaceStatus(
+                    harvested.find((item) => item.templateId === row.templateId),
+                  )}
+                </Badge>
               </div>
             </CardHeader>
             <CardContent className="grid gap-3 lg:grid-cols-2">
@@ -312,6 +357,21 @@ export function TemplatesView() {
                   {variableHint(row)}
                   {row.buttonLabel ? ` · क्विक रिप्लाई: ${row.buttonLabel}` : ""}
                 </p>
+                {harvested.find((item) => item.templateId === row.templateId)
+                  ?.body ? (
+                  <div className="mt-3">
+                    <p className="mb-1 text-xs font-medium tracking-wide uppercase text-foreground">
+                      BotSpace पर यही Approve बॉडी है
+                    </p>
+                    <pre className="whitespace-pre-wrap rounded-lg border border-[#c8102e]/30 bg-[#c8102e]/5 p-3 text-xs text-foreground">
+                      {
+                        harvested.find(
+                          (item) => item.templateId === row.templateId,
+                        )?.body
+                      }
+                    </pre>
+                  </div>
+                ) : null}
               </div>
             </CardContent>
           </Card>

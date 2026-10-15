@@ -31,6 +31,7 @@ function emptyStore(): StoreData {
     bookingSequence: structuredClone(DEFAULT_BOOKING_SEQUENCE),
     leads: [],
     messages: [],
+    botspaceTemplates: [],
   };
 }
 
@@ -62,6 +63,7 @@ async function loadFromDisk(): Promise<StoreData> {
         festiveOfferSentAt: lead.festiveOfferSentAt ?? null,
       })),
       messages: parsed.messages ?? [],
+      botspaceTemplates: parsed.botspaceTemplates ?? [],
     };
     if (version < STORE_VERSION) {
       applyHindiTemplateCatalog(data);

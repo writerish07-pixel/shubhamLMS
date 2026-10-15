@@ -1,5 +1,5 @@
-import { templateBodyVariables } from "@/lib/hindi-templates";
-import type { Settings } from "@/lib/types";
+import { HINDI_TEMPLATES, templateBodyVariables } from "@/lib/hindi-templates";
+import type { CachedBotspaceTemplate, Settings } from "@/lib/types";
 import {
   explainWhatsAppError,
   extractProviderError,
@@ -290,13 +290,9 @@ export async function sendLeadWhatsApp(
   );
 }
 
-export type HarvestedTemplate = {
-  templateId: string;
-  language?: string;
-  body?: string;
-  buttons?: string[];
-  sourceMessageId?: string;
-};
+export type HarvestedTemplate = CachedBotspaceTemplate;
+
+const TEMPLATE_CACHE_MS = 6 * 60 * 60 * 1000;
 
 const BOTSPACE_PUBLIC_PATHS = [
   "POST /v1/{channelId}/message/send-message",
@@ -334,6 +330,7 @@ function extractTemplates(raw: unknown, sourceMessageId?: string): HarvestedTemp
               .filter((label): label is string => Boolean(label))
           : undefined,
         sourceMessageId,
+        checkedAt: new Date().toISOString(),
       });
     }
     for (const nested of Object.values(obj)) visit(nested, depth + 1);
@@ -342,35 +339,152 @@ function extractTemplates(raw: unknown, sourceMessageId?: string): HarvestedTemp
   return found;
 }
 
+function deliveryFromMessage(raw: unknown): { deliveryStatus?: string; failedReason?: string } {
+  const payload = asRecord(raw) ?? {};
+  const inner = asRecord(payload.data) ?? payload;
+  if (inner.failed === true) {
+    return {
+      deliveryStatus: "FAILED",
+      failedReason:
+        typeof inner.failedReason === "string" ? inner.failedReason : undefined,
+    };
+  }
+  if (inner.read === true) return { deliveryStatus: "READ" };
+  if (inner.delivered === true) return { deliveryStatus: "DELIVERED" };
+  if (inner.sent === true) return { deliveryStatus: "SENT" };
+  return {};
+}
+
+function mergeHarvested(rows: HarvestedTemplate[]): HarvestedTemplate[] {
+  const byId = new Map<string, HarvestedTemplate>();
+  for (const row of rows) {
+    const key = row.templateId;
+    const previous = byId.get(key);
+    if (!previous) {
+      byId.set(key, row);
+      continue;
+    }
+    const preferNew = Boolean(row.body) && !previous.body;
+    const newer =
+      Date.parse(row.checkedAt || "") > Date.parse(previous.checkedAt || "");
+    if (preferNew || (!previous.body && !row.body && newer) || (row.body && newer)) {
+      byId.set(key, { ...previous, ...row, body: row.body || previous.body });
+    } else {
+      byId.set(key, { ...row, ...previous, body: previous.body || row.body });
+    }
+  }
+  return [...byId.values()].sort((a, b) => a.templateId.localeCompare(b.templateId));
+}
+
+function cacheFresh(row: HarvestedTemplate | undefined, refresh: boolean) {
+  if (refresh || !row?.checkedAt) return false;
+  const age = Date.now() - Date.parse(row.checkedAt);
+  return Number.isFinite(age) && age >= 0 && age < TEMPLATE_CACHE_MS;
+}
+
+async function readTemplateMessage(
+  settings: Settings,
+  messageId: string,
+): Promise<HarvestedTemplate[]> {
+  const result = await botspace<unknown>(
+    settings,
+    `/v1/${settings.channelId}/message/${messageId}`,
+  );
+  if (!result.ok) return [];
+  const delivery = deliveryFromMessage(result.raw);
+  return extractTemplates(result.raw, messageId).map((row) => ({
+    ...row,
+    ...delivery,
+    checkedAt: new Date().toISOString(),
+  }));
+}
+
+async function probeTemplateOnChannel(
+  settings: Settings,
+  templateId: string,
+): Promise<HarvestedTemplate> {
+  const now = new Date().toISOString();
+  const sent = await sendTemplateMessage(settings, {
+    name: settings.businessName || "Shubham Motors",
+    phone: settings.channelPhone,
+    templateId,
+    variables: templateBodyVariables(templateId, "Test", "Splendor Plus"),
+  });
+  if (!sent.messageId) {
+    return {
+      templateId,
+      failedReason: sent.error,
+      checkedAt: now,
+    };
+  }
+  await new Promise((resolve) => setTimeout(resolve, 400));
+  const harvested = await readTemplateMessage(settings, sent.messageId);
+  const match = harvested.find((row) => row.templateId === templateId) ?? harvested[0];
+  if (match?.body) return { ...match, templateId, checkedAt: now };
+  return {
+    templateId,
+    sourceMessageId: sent.messageId,
+    failedReason: sent.error,
+    checkedAt: now,
+  };
+}
+
 export async function inspectBotspaceTemplates(
   settings: Settings,
   messageIds: string[] = [],
+  options: {
+    cached?: HarvestedTemplate[];
+    catalogIds?: string[];
+    refresh?: boolean;
+  } = {},
 ) {
   const uniqueIds = [...new Set(messageIds.filter(Boolean))].slice(0, 12);
-  const harvested: HarvestedTemplate[] = [];
-  const seen = new Set<string>();
+  const fromMessages: HarvestedTemplate[] = [];
 
   for (const messageId of uniqueIds) {
-    const result = await botspace<unknown>(
-      settings,
-      `/v1/${settings.channelId}/message/${messageId}`,
-    );
-    if (!result.ok) continue;
-    for (const row of extractTemplates(result.raw, messageId)) {
-      const key = `${row.templateId}:${row.language ?? ""}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      harvested.push(row);
-    }
+    fromMessages.push(...(await readTemplateMessage(settings, messageId)));
   }
 
+  let harvested = mergeHarvested([...(options.cached ?? []), ...fromMessages]);
+  const catalogIds = [
+    ...new Set(
+      (options.catalogIds?.length
+        ? options.catalogIds
+        : [
+            settings.inquiryTemplateId,
+            settings.bookingTemplateId,
+            settings.purchaseTemplateId,
+            settings.festiveTemplateId,
+            ...HINDI_TEMPLATES.map((row) => row.templateId),
+          ]
+      ).filter(Boolean),
+    ),
+  ];
+
+  const missing = catalogIds.filter((id) => {
+    const cached = harvested.find((row) => row.templateId === id);
+    if (cached?.body && cacheFresh(cached, options.refresh === true)) return false;
+    if (options.refresh) return true;
+    return !cached?.body;
+  });
+
+  if (settings.apiKey && settings.channelPhone && missing.length > 0) {
+    const probed = await Promise.all(
+      missing.map((templateId) => probeTemplateOnChannel(settings, templateId)),
+    );
+    harvested = mergeHarvested([...harvested, ...probed]);
+  }
+
+  const found = harvested.filter((row) => Boolean(row.body));
   return {
-    listed: false as const,
+    listed: found.length > 0,
     hasListEndpoint: false as const,
     docsUrl: "https://public-api.bot.space",
     publicPaths: BOTSPACE_PUBLIC_PATHS,
     error:
-      "BotSpace Public API v1 can send templates but cannot list the template library. Hindi copy below is what this desk uses. Create the same Template IDs in BotSpace (language hi), then press sync. After festive approval, change only the festive Template ID in Settings.",
+      found.length > 0
+        ? undefined
+        : "BotSpace Public API v1 has no template-list endpoint. Press sync to pull approved Template IDs from BotSpace (a test send to the showroom number). After festive approval, the festive ID should appear here.",
     harvested,
     harvestedFromMessages: uniqueIds.length,
   };

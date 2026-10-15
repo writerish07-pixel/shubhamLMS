@@ -80,6 +80,17 @@ export type Settings = {
   followupWindowEnd: string;
 };
 
+export type CachedBotspaceTemplate = {
+  templateId: string;
+  language?: string;
+  body?: string;
+  buttons?: string[];
+  sourceMessageId?: string;
+  deliveryStatus?: string;
+  failedReason?: string;
+  checkedAt: string;
+};
+
 export type StoreData = {
   storeVersion?: number;
   settings: Settings;
@@ -87,4 +98,5 @@ export type StoreData = {
   bookingSequence: SequenceStep[];
   leads: Lead[];
   messages: MessageLog[];
+  botspaceTemplates?: CachedBotspaceTemplate[];
 };
